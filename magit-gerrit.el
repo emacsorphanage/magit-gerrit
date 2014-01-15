@@ -237,7 +237,7 @@
 	(message (format "Generating Gerrit Patchset for refs %s dir %s"
 			 ref dir))
 
-	(magit-diff "FETCH_HEAD..FETCH_HEAD~1")
+	(magit-diff "FETCH_HEAD~1..FETCH_HEAD")
 
 	(magit-refresh-all)
 	))))

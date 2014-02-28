@@ -1,4 +1,4 @@
-;;; magit-gerrit.el --- 
+;;; magit-gerrit.el ---
 ;;
 ;; Copyright (C) 2013 Brian Fransioli
 ;;
@@ -54,7 +54,7 @@
 ;;
 ;; `magit-gerrit' will be enabled automatically on `magit-status' if
 ;; the git remote repo uses the same creds found in
-;; `magit-gerrit-ssh-creds'.  
+;; `magit-gerrit-ssh-creds'.
 ;;
 ;; Ex:  magit-gerrit-ssh-creds == br.fransioli@gerrit.org
 ;; $ cd ~/elisp; git remote -v => https://github.com/terranpro/magit-gerrit.git
@@ -76,7 +76,7 @@
 
 (defun gerrit-command (cmd &rest args)
   (let ((gcmd (concat
-	       "-x -p 29418 " 
+	       "-x -p 29418 "
 	       (or magit-gerrit-ssh-creds
 		   (error "`magit-gerrit-ssh-creds' must be set!"))
 	       " "
@@ -88,7 +88,7 @@
     gcmd))
 
 (defun gerrit-query (prj &optional status)
-  (gerrit-command "query" 
+  (gerrit-command "query"
 		  "--format=JSON"
 		  "--all-approvals"
 		  "--current-patch-set"
@@ -115,9 +115,9 @@
   (gerrit-ssh-cmd "review" "--project" prj "--verified" score rev))
 
 (defun magit-gerrit-get-project ()
- (let* ((regx (rx (zero-or-one ?:) (zero-or-more (any digit)) ?/ 
+ (let* ((regx (rx (zero-or-one ?:) (zero-or-more (any digit)) ?/
 		  (group (not (any "/")))
-		  (group (one-or-more any))))     
+		  (group (one-or-more any))))
 	(str (magit-get "remote.origin.url"))
 	(sstr (car (last (split-string str "//")))))
    (string-match regx sstr)
@@ -133,10 +133,10 @@
 (defun magit-gerrit-pretty-print-reviewer (name email crdone vrdone)
   (let* ((wid (1- (window-width)))
 	 (crstr (propertize (if crdone "C" " ")
-			    'face '(magit-log-head-label-bisect-bad 
+			    'face '(magit-log-head-label-bisect-bad
 				    bold)))
 	 (vrstr (propertize (if vrdone "V" " ")
-			    'face '(magit-log-head-label-bisect-good 
+			    'face '(magit-log-head-label-bisect-good
 				    bold)))
 	 (namestr (propertize (or name "") 'face' magit-diff-add))
 	 (emailstr (propertize (if email (concat "(" email ")") "")
@@ -155,12 +155,12 @@
 			     'face 'magit-log-author))
 	 (subjstr (propertize (magit-gerrit-string-trunc subj subjmaxlen)
 			      'face 'magit-log-reflog-label-cherry-pick))
-	 (authsubjpadding (make-string 
+	 (authsubjpadding (make-string
 			   (- wid (+ nlen 1 (length author) (length subjstr)))
 			   ? )))
-    (format "%s\t%s%s%s\n" 
+    (format "%s\t%s%s%s\n"
 	    numstr subjstr authsubjpadding author)))
-    
+
 (defun magit-gerrit-wash-approval (approval)
   (let* ((approver (cdr-safe (assoc 'by approval)))
 	 (approvname (cdr-safe (assoc 'name approver)))
@@ -169,13 +169,13 @@
 	 (verified (string= type "Verified"))
 	 (codereview (string= type "Code-Review"))
 	 (score (cdr-safe (assoc 'value approval))))
-    
+
     (magit-with-section "Approval" 'approval
       (magit-set-section-info approver)
 	(insert (concat
 	      (magit-gerrit-pretty-print-reviewer
 	       approvname approvemail
-	       (when codereview score) 
+	       (when codereview score)
 	       (when verified score))
 	      "\n")))))
 
@@ -200,9 +200,9 @@
     (when (and num subj owner-name)
      (magit-with-section subj 'review
        (magit-set-section-info num)
-       (insert 
+       (insert
 	(propertize
-	 (magit-gerrit-pretty-print-review num subj owner-name) 
+	 (magit-gerrit-pretty-print-review num subj owner-name)
 	 'magit-gerrit-jobj
 	 jobj))
        (unless (magit-section-hidden (magit-current-section))
@@ -217,7 +217,7 @@
 (defun magit-gerrit-section (section title washer &rest args)
   (let ((magit-git-executable (executable-find "ssh"))
 	(magit-git-standard-options nil))
-   (apply #'magit-git-section section title washer 
+   (apply #'magit-git-section section title washer
 	  (split-string (car args)))))
 
 (defun magit-gerrit-remote-update (&optional remote)
@@ -258,7 +258,7 @@
 (magit-define-command gerrit-add-reviewer ()
   (interactive)
   "ssh -x -p 29418 user@gerrit gerrit set-reviewers --project toplvlroot/prjname --add email@addr"
-  
+
   (apply #'call-process
    (executable-find "ssh") nil nil nil
    (split-string (gerrit-command "set-reviewers"
@@ -303,8 +303,8 @@
   "ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit "
   (apply #'call-process
 	 (executable-find "ssh") nil nil nil
-	 (split-string 
-	  (gerrit-command 
+	 (split-string
+	  (gerrit-command
 	   "review"
 	   (cdr-safe (assoc
 		      'revision
@@ -318,13 +318,13 @@
 (magit-define-command  gerrit-create-review ()
   (interactive)
   (let* ((branch (or (magit-get-current-branch)
-                     (error "Don't push a detached head.  That's gross")))
-	 
+		     (error "Don't push a detached head.  That's gross")))
+
 	 (rev (magit-rev-parse (or (magit-commit-at-point)
 				   (error "Select a commit for review"))))
-	 
+
 	 (branch-merge (and branch (magit-get "branch" branch "merge")))
-	 (branch-pub (progn 
+	 (branch-pub (progn
 		       (string-match (rx "refs/heads" (group (one-or-more any)))
 				    branch-merge)
 		       (concat "refs/publish" (match-string 1 branch-merge))))
@@ -387,25 +387,25 @@
       (error "You *must* set `magit-gerrit-ssh-creds' to enable magit-gerrit-mode"))
   (cond
    (magit-gerrit-mode
-    (add-hook 'magit-after-insert-stashes-hook 
+    (add-hook 'magit-after-insert-stashes-hook
 	      'magit-insert-gerrit-reviews nil t)
-    (add-hook 'magit-create-branch-command-hook 
+    (add-hook 'magit-create-branch-command-hook
 	      'magit-gerrit-create-branch nil t)
     ;(add-hook 'magit-pull-command-hook 'magit-gerrit-pull nil t)
-    (add-hook 'magit-remote-update-command-hook 
+    (add-hook 'magit-remote-update-command-hook
 	      'magit-gerrit-remote-update nil t)
-    (add-hook 'magit-push-command-hook 
+    (add-hook 'magit-push-command-hook
 	      'magit-gerrit-push nil t))
 
    (t
-    (remove-hook 'magit-after-insert-stashes-hook 
+    (remove-hook 'magit-after-insert-stashes-hook
 		 'magit-insert-gerrit-reviews t)
-    (remove-hook 'magit-create-branch-command-hook 
+    (remove-hook 'magit-create-branch-command-hook
 		 'magit-gerrit-create-branch t)
     ;(remove-hook 'magit-pull-command-hook 'magit-gerrit-pull t)
-    (remove-hook 'magit-remote-update-command-hook 
+    (remove-hook 'magit-remote-update-command-hook
 		 'magit-gerrit-remote-update t)
-    (remove-hook 'magit-push-command-hook 
+    (remove-hook 'magit-push-command-hook
 		 'magit-gerrit-push t)))
   (when (called-interactively-p 'any)
     (magit-refresh)))

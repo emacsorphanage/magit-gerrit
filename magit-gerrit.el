@@ -133,12 +133,15 @@
 (defun magit-gerrit-pretty-print-reviewer (name email crdone vrdone)
   (let* ((wid (1- (window-width)))
 	 (crstr (propertize (if crdone "C" " ")
-			    'face '(magit-log-head-label-bisect-bad bold)))
+			    'face '(magit-log-head-label-bisect-bad 
+				    bold)))
 	 (vrstr (propertize (if vrdone "V" " ")
-			    'face '(magit-log-head-label-bisect-good bold)))
-	 (namestr (propertize name 'face' magit-diff-add))
-	 (emailstr (propertize email 'face 'change-diff-del)))
-    (format "%s %s\t%s (%s)" crstr vrstr namestr emailstr)))
+			    'face '(magit-log-head-label-bisect-good 
+				    bold)))
+	 (namestr (propertize (or name "") 'face' magit-diff-add))
+	 (emailstr (propertize (if email (concat "(" email ")") "")
+			       'face 'change-diff-del)))
+    (format "%s %s\t%s %s" crstr vrstr namestr emailstr)))
 
 (defun magit-gerrit-pretty-print-review (num subj owner-name)
   (let* ((wid (1- (window-width)))

@@ -30,7 +30,7 @@
 ;;; To Use:
 ;;
 ;; (require 'magit-gerrit)
-;; (setq magit-gerrit-ssh-creds "myid@gerrithost.org")
+;; (setq-default magit-gerrit-ssh-creds "myid@gerrithost.org")
 ;;
 ;;
 ;; M-x `magit-status'

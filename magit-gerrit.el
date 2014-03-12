@@ -71,6 +71,13 @@
 (eval-when-compile
   (require 'cl-lib))
 
+;; Define a defvar-local macro for Emacs < 24.3
+(unless (fboundp 'defvar-local)
+  (defmacro defvar-local (var val &optional docstring)
+    `(progn
+       (defvar ,var ,val ,docstring)
+       (make-variable-buffer-local ',var))))
+
 (defvar-local magit-gerrit-ssh-creds nil
   "Credentials used to execute gerrit commands via ssh of the form ID@Server")
 

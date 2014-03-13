@@ -49,6 +49,9 @@
 ;; multiple Gerrit's, you can make this a file or directory local
 ;; variable for one particular project.
 ;;
+;; If your git remote for gerrit is not the default "origin", then
+;; `magit-gerrit-remote' should be adjusted accordingly (e.g. "gerrit")
+;;
 ;; Recommended to auto add reviewers via git hooks (precommit), rather
 ;; than manually performing 'T A' for every review.
 ;;
@@ -80,6 +83,9 @@
 
 (defvar-local magit-gerrit-ssh-creds nil
   "Credentials used to execute gerrit commands via ssh of the form ID@Server")
+
+(defvar-local magit-gerrit-remote "origin"
+  "Default remote name to use for gerrit (e.g. \"origin\", \"gerrit\")")
 
 (defun gerrit-command (cmd &rest args)
   (let ((gcmd (concat
@@ -121,15 +127,18 @@
 (defun gerrit-review-verify (prj rev score)
   (gerrit-ssh-cmd "review" "--project" prj "--verified" score rev))
 
+(defun magit-gerrit-get-remote-url ()
+  (magit-get "remote" magit-gerrit-remote "url"))
+
 (defun magit-gerrit-get-project ()
  (let* ((regx (rx (zero-or-one ?:) (zero-or-more (any digit)) ?/
 		  (group (not (any "/")))
 		  (group (one-or-more any))))
-	(str (magit-get "remote.origin.url"))
+	(str (or (magit-gerrit-get-remote-url) ""))
 	(sstr (car (last (split-string str "//")))))
-   (string-match regx sstr)
-   (concat (match-string 1 sstr)
-	   (match-string 2 sstr))))
+   (when (string-match regx sstr)
+     (concat (match-string 1 sstr)
+	     (match-string 2 sstr)))))
 
 (defun magit-gerrit-string-trunc (str maxlen)
   (if (> (length str) maxlen)
@@ -335,8 +344,7 @@
 		       (string-match (rx "refs/heads" (group (one-or-more any)))
 				    branch-merge)
 		       (concat "refs/publish" (match-string 1 branch-merge))))
-	 (branch-remote (and branch (magit-get "branch" branch "remote")))
-	 (origin-remote (and (magit-get "remote" "origin" "url") "origin")))
+	 (branch-remote (and branch (magit-get "branch" branch "remote"))))
 
     (message "Args: %s "
 	     (concat rev ":" branch-pub))
@@ -392,6 +400,8 @@
       (error "This mode only makes sense with magit"))
   (or magit-gerrit-ssh-creds
       (error "You *must* set `magit-gerrit-ssh-creds' to enable magit-gerrit-mode"))
+  (or (magit-gerrit-get-remote-url)
+      (error "You *must* set `magit-gerrit-remote' to a valid Gerrit remote"))
   (cond
    (magit-gerrit-mode
     (add-hook 'magit-after-insert-stashes-hook
@@ -418,10 +428,11 @@
     (magit-refresh)))
 
 (defun magit-gerrit-check-enable ()
-  (when (and magit-gerrit-ssh-creds
-	     (string-match magit-gerrit-ssh-creds
-			   (magit-get "remote" "origin" "url")))
-    (magit-gerrit-mode t)))
+  (let ((remote-url (magit-gerrit-get-remote-url)))
+    (when (and remote-url
+	       magit-gerrit-ssh-creds
+	       (string-match magit-gerrit-ssh-creds remote-url))
+     (magit-gerrit-mode t))))
 
 (add-hook 'magit-status-mode-hook #'magit-gerrit-check-enable t)
 

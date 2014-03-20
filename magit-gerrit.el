@@ -242,7 +242,7 @@
 (defun magit-gerrit-review-at-point ()
   (get-text-property (point) 'magit-gerrit-jobj))
 
-(magit-define-command gerrit-view-patchset-diff ()
+(defun magit-gerrit-view-patchset-diff ()
   "View the Diff for a Patchset"
   (interactive)
   (let ((jobj (magit-gerrit-review-at-point)))
@@ -261,17 +261,17 @@
 	(magit-refresh-all)
 	))))
 
-(magit-define-command gerrit-download-patchset ()
+(defun magit-gerrit-download-patchset ()
   "Download a Gerrit Review Patchset"
   (interactive)
   (error "Not Yet Implemented!"))
 
-(magit-define-inserter gerrit-reviews ()
+(defun magit-insert-gerrit-reviews ()
   (magit-gerrit-section 'gerrit-reviews
 			"Reviews:" 'magit-gerrit-wash-reviews
 			(gerrit-query (magit-gerrit-get-project))))
 
-(magit-define-command gerrit-add-reviewer ()
+(defun magit-gerrit-add-reviewer ()
   (interactive)
   "ssh -x -p 29418 user@gerrit gerrit set-reviewers --project toplvlroot/prjname --add email@addr"
 
@@ -284,7 +284,7 @@
 		    (read-string "Reviewer Name/Email: ")
 		    (cdr-safe (assoc 'id (magit-gerrit-review-at-point)))))))
 
-(magit-define-command gerrit-verify-review ()
+(defun magit-gerrit-verify-review ()
   "Verify a Gerrit Review"
   (interactive)
   (let ((score (completing-read "Score: "
@@ -299,7 +299,7 @@
     (gerrit-review-verify prj rev score)
     (magit-refresh)))
 
-(magit-define-command gerrit-code-review ()
+(defun magit-gerrit-code-review ()
   "Perform a Gerrit Code Review"
   (interactive)
   (let ((score (completing-read "Score: "
@@ -314,7 +314,7 @@
     (gerrit-code-review prj rev score)
     (magit-refresh)))
 
-(magit-define-command gerrit-submit-review ()
+(defun magit-gerrit-submit-review ()
   (interactive)
   "ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit "
   (apply #'call-process
@@ -331,7 +331,7 @@
 	   "--submit")))
   (magit-fetch-current))
 
-(magit-define-command  gerrit-create-review ()
+(defun magit-gerrit-create-review ()
   (interactive)
   (let* ((branch (or (magit-get-current-branch)
 		     (error "Don't push a detached head.  That's gross")))
@@ -352,7 +352,7 @@
     (magit-run-git-async "push" "-v" branch-remote
 			 (concat rev ":" branch-pub))))
 
-(magit-define-command  gerrit-abandon-review ()
+(defun magit-gerrit-abandon-review ()
   (interactive)
   (let ((prj (magit-gerrit-get-project))
 	(id (cdr-safe (assoc 'id

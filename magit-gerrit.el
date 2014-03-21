@@ -248,18 +248,16 @@
   (let ((jobj (magit-gerrit-review-at-point)))
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
-	    (dir default-directory)
-	    (buf (get-buffer-create magit-diff-buffer-name)))
-	(let ((magit-custom-options (list ref)))
-	  (magit-fetch-current)
-	  )
+	    (dir default-directory))
 	(message (format "Generating Gerrit Patchset for refs %s dir %s"
 			 ref dir))
+	(magit-run-git-async "fetch" magit-gerrit-remote ref)
+	(while (and magit-process
+		    (equal (process-status magit-process) 'run))
+	  (sit-for 0.1 t))
 
 	(magit-diff "FETCH_HEAD~1..FETCH_HEAD")
-
-	(magit-refresh-all)
-	))))
+	(magit-refresh-all)))))
 
 (magit-define-command gerrit-download-patchset ()
   "Download a Gerrit Review Patchset"

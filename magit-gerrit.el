@@ -156,11 +156,12 @@
 				    bold)))
 	 (namestr (propertize (or name "") 'face' magit-diff-add))
 	 (emailstr (propertize (if email (concat "(" email ")") "")
-			       'face 'change-diff-del)))
+			       'face 'change-log-name)))
     (format "%s %s\t%s %s" crstr vrstr namestr emailstr)))
 
 (defun magit-gerrit-pretty-print-review (num subj owner-name)
-  (let* ((wid (1- (window-width)))
+  ;; window-width - two prevents long line arrow from being shown
+  (let* ((wid (- (window-width) 2))
 	 (numstr (propertize num 'face 'magit-log-sha1))
 	 (nlen (length numstr))
 	 (olen (length owner-name))
@@ -186,8 +187,8 @@
 	 (codereview (string= type "Code-Review"))
 	 (score (cdr-safe (assoc 'value approval))))
 
-    (magit-with-section "Approval" 'approval
-      (magit-set-section-info approver)
+    (magit-with-section (section approval "Approval")
+      (setf (magit-section-info section) approver)
 	(insert (concat
 	      (magit-gerrit-pretty-print-reviewer
 	       approvname approvemail
@@ -214,8 +215,8 @@
     (if (and beg end)
 	(delete-region beg end))
     (when (and num subj owner-name)
-     (magit-with-section subj 'review
-       (magit-set-section-info num)
+      (magit-with-section (section review subj)
+       (setf (magit-section-info section) num)
        (insert
 	(propertize
 	 (magit-gerrit-pretty-print-review num subj owner-name)
@@ -233,8 +234,8 @@
 (defun magit-gerrit-section (section title washer &rest args)
   (let ((magit-git-executable (executable-find "ssh"))
 	(magit-git-standard-options nil))
-   (apply #'magit-git-section section title washer
-	  (split-string (car args)))))
+    (magit-cmd-insert-section (section title)
+	washer magit-git-executable (split-string (car args)))))
 
 (defun magit-gerrit-remote-update (&optional remote)
   nil)
@@ -250,16 +251,12 @@
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
 	    (dir default-directory)
 	    (buf (get-buffer-create magit-diff-buffer-name)))
-	(let ((magit-custom-options (list ref)))
-	  (magit-fetch-current)
-	  )
-	(message (format "Generating Gerrit Patchset for refs %s dir %s"
-			 ref dir))
-
-	(magit-diff "FETCH_HEAD~1..FETCH_HEAD")
-
-	(magit-refresh-all)
-	))))
+	(let* ((magit-custom-options (list ref))
+	       (magit-proc (magit-fetch-current)))
+	  (message "Waiting for git fetch to complete...")
+	  (magit-process-wait))
+	(message (format "Generating Gerrit Patchset for refs %s dir %s" ref dir))
+	(magit-diff "FETCH_HEAD~1..FETCH_HEAD")))))
 
 (defun magit-gerrit-download-patchset ()
   "Download a Gerrit Review Patchset"
@@ -335,8 +332,11 @@
   (interactive)
   (let* ((branch (or (magit-get-current-branch)
 		     (error "Don't push a detached head.  That's gross")))
-
-	 (rev (magit-rev-parse (or (magit-commit-at-point)
+	 (commitid (or (when (eq (magit-section-type (magit-current-section))
+				 'commit)
+			 (magit-section-info (magit-current-section)))
+		       (error "Couldn't find a commit at point")))
+	 (rev (magit-rev-parse (or commitid
 				   (error "Select a commit for review"))))
 
 	 (branch-merge (and branch (magit-get "branch" branch "merge")))
@@ -350,7 +350,7 @@
 	     (concat rev ":" branch-pub))
 
     (magit-run-git-async "push" "-v" branch-remote
-			 (concat rev ":" branch-pub))))
+    			 (concat rev ":" branch-pub))))
 
 (defun magit-gerrit-abandon-review ()
   (interactive)
@@ -404,8 +404,9 @@
       (error "You *must* set `magit-gerrit-remote' to a valid Gerrit remote"))
   (cond
    (magit-gerrit-mode
-    (add-hook 'magit-after-insert-stashes-hook
-	      'magit-insert-gerrit-reviews nil t)
+    (magit-add-section-hook 'magit-status-sections-hook
+			    'magit-insert-gerrit-reviews
+			    'magit-insert-stashes t t)
     (add-hook 'magit-create-branch-command-hook
 	      'magit-gerrit-create-branch nil t)
     ;(add-hook 'magit-pull-command-hook 'magit-gerrit-pull nil t)

@@ -43,8 +43,8 @@ variables.
 
 ```
 ((magit-mode .
-      ((magit-gerrit-ssh-creds "dev_a@prj1.server.com")
-       (magit-gerrit-remote "gerrit"))))
+      ((magit-gerrit-ssh-creds . "dev_a@prj1.server.com")
+       (magit-gerrit-remote . "gerrit"))))
 ```
 
 Author

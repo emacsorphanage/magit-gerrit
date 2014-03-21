@@ -434,6 +434,10 @@
 	       (string-match magit-gerrit-ssh-creds remote-url))
      (magit-gerrit-mode t))))
 
+;; Hack in dir-local variables that might be set for magit gerrit
+(add-hook 'magit-status-mode-hook #'hack-dir-local-variables-non-file-buffer t)
+
+;; Try to auto enable magit-gerrit in the magit-status buffer
 (add-hook 'magit-status-mode-hook #'magit-gerrit-check-enable t)
 
 (provide 'magit-gerrit)

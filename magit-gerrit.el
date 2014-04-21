@@ -169,12 +169,12 @@ Succeed even if branch already exist
 	 (vrstr (propertize (if vrdone "V" " ")
 			    'face '(magit-log-head-label-bisect-good
 				    bold)))
-	 (namestr (propertize (or name "") 'face' magit-diff-add))
+	 (namestr (propertize (or name "") 'face 'magit-diff-add))
 	 (emailstr (propertize (if email (concat "(" email ")") "")
 			       'face 'change-log-name)))
     (format "%s %s\t%s %s" crstr vrstr namestr emailstr)))
 
-(defun magit-gerrit-pretty-print-review (num subj owner-name)
+(defun magit-gerrit-pretty-print-review (num subj owner-name &optional draft)
   ;; window-width - two prevents long line arrow from being shown
   (let* ((wid (- (window-width) 2))
 	 (numstr (propertize num 'face 'magit-log-sha1))
@@ -186,7 +186,10 @@ Succeed even if branch already exist
 	 (author (propertize (magit-gerrit-string-trunc owner-name authmaxlen)
 			     'face 'magit-log-author))
 	 (subjstr (propertize (magit-gerrit-string-trunc subj subjmaxlen)
-			      'face 'magit-log-reflog-label-cherry-pick))
+			      'face
+			      (if draft
+				  'magit-log-head-label-bisect-skip
+				'magit-log-reflog-label-cherry-pick)))
 	 (authsubjpadding (make-string
 			   (- wid (+ nlen 1 (length author) (length subjstr)))
 			   ? )))
@@ -224,6 +227,8 @@ Succeed even if branch already exist
 	 (owner-name (cdr-safe (assoc 'name owner)))
 	 (owner-email (cdr-safe (assoc 'email owner)))
 	 (patchsets (cdr-safe (assoc 'currentPatchSet jobj)))
+	 ;; compare w/t since when false the value is => :json-false
+	 (isdraft (eq (cdr-safe (assoc 'isDraft patchsets)) t))
 	 (approvs (cdr-safe (if (listp patchsets)
 				(assoc 'approvals patchsets)
 			      (assoc 'approvals (aref patchsets 0))))))
@@ -234,7 +239,7 @@ Succeed even if branch already exist
        (setf (magit-section-info section) num)
        (insert
 	(propertize
-	 (magit-gerrit-pretty-print-review num subj owner-name)
+	 (magit-gerrit-pretty-print-review num subj owner-name isdraft)
 	 'magit-gerrit-jobj
 	 jobj))
        (unless (magit-section-hidden (magit-current-section))
@@ -308,14 +313,10 @@ Succeed even if branch already exist
   (interactive)
   "ssh -x -p 29418 user@gerrit gerrit set-reviewers --project toplvlroot/prjname --add email@addr"
 
-  (apply #'call-process
-   (executable-find "ssh") nil nil nil
-   (split-string (gerrit-command "set-reviewers"
-		    "--project"
-		    (magit-gerrit-get-project)
-		    "--add"
-		    (read-string "Reviewer Name/Email: ")
-		    (cdr-safe (assoc 'id (magit-gerrit-review-at-point)))))))
+  (gerrit-ssh-cmd "set-reviewers"
+		  "--project" (magit-gerrit-get-project)
+		  "--add" (read-string "Reviewer Name/Email: ")
+		  (cdr-safe (assoc 'id (magit-gerrit-review-at-point)))))
 
 (defun magit-gerrit-verify-review ()
   "Verify a Gerrit Review"
@@ -350,18 +351,14 @@ Succeed even if branch already exist
 (defun magit-gerrit-submit-review ()
   (interactive)
   "ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit "
-  (apply #'call-process
-	 (executable-find "ssh") nil nil nil
-	 (split-string
-	  (gerrit-command
-	   "review"
-	   (cdr-safe (assoc
-		      'revision
-		      (cdr-safe (assoc 'currentPatchSet
-				       (magit-gerrit-review-at-point)))))
-	   "--project"
-	   (magit-gerrit-get-project)
-	   "--submit")))
+  (gerrit-ssh-cmd "review"
+		  (cdr-safe (assoc
+			     'revision
+			     (cdr-safe (assoc 'currentPatchSet
+					      (magit-gerrit-review-at-point)))))
+		  "--project"
+		  (magit-gerrit-get-project)
+		  "--submit")
   (magit-fetch-current))
 
 (defun magit-gerrit-push-review (status)
@@ -385,7 +382,7 @@ Succeed even if branch already exist
 	     (concat rev ":" branch-pub))
 
     (magit-run-git-async "push" "-v" branch-remote
-    			 (concat rev ":" branch-pub))))
+			 (concat rev ":" branch-pub))))
 
 (defun magit-gerrit-create-review ()
   (interactive)
@@ -394,6 +391,30 @@ Succeed even if branch already exist
 (defun magit-gerrit-create-draft ()
   (interactive)
   (magit-gerrit-push-review 'drafts))
+
+(defun magit-gerrit-publish-draft ()
+  (interactive)
+  (let ((prj (magit-gerrit-get-project))
+	(id (cdr-safe (assoc 'id
+		     (magit-gerrit-review-at-point))))
+	(rev (cdr-safe (assoc
+			'revision
+			(cdr-safe (assoc 'currentPatchSet
+					 (magit-gerrit-review-at-point)))))))
+    (gerrit-ssh-cmd "review" "--project" prj "--publish" rev))
+  (magit-refresh))
+
+(defun magit-gerrit-delete-draft ()
+  (interactive)
+  (let ((prj (magit-gerrit-get-project))
+	(id (cdr-safe (assoc 'id
+		     (magit-gerrit-review-at-point))))
+	(rev (cdr-safe (assoc
+			'revision
+			(cdr-safe (assoc 'currentPatchSet
+					 (magit-gerrit-review-at-point)))))))
+    (gerrit-ssh-cmd "review" "--project" prj "--delete" rev))
+  (magit-refresh))
 
 (defun magit-gerrit-abandon-review ()
   (interactive)
@@ -417,6 +438,10 @@ Succeed even if branch already exist
 				'magit-gerrit-create-review)
   (magit-key-mode-insert-action 'gerrit "W" "Push Commit For Draft Review"
 				'magit-gerrit-create-draft)
+  (magit-key-mode-insert-action 'gerrit "p" "Publish Draft Patchset"
+				'magit-gerrit-publish-draft)
+  (magit-key-mode-insert-action 'gerrit "k" "Delete Draft"
+				'magit-gerrit-delete-draft)
   (magit-key-mode-insert-action 'gerrit "A" "Add Reviewer"
 				'magit-gerrit-add-reviewer)
   (magit-key-mode-insert-action 'gerrit "V" "Verify"

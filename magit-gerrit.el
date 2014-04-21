@@ -328,8 +328,7 @@
 	   "--submit")))
   (magit-fetch-current))
 
-(defun magit-gerrit-create-review ()
-  (interactive)
+(defun magit-gerrit-push-review (status)
   (let* ((branch (or (magit-get-current-branch)
 		     (error "Don't push a detached head.  That's gross")))
 	 (commitid (or (when (eq (magit-section-type (magit-current-section))
@@ -343,7 +342,7 @@
 	 (branch-pub (progn
 		       (string-match (rx "refs/heads" (group (one-or-more any)))
 				    branch-merge)
-		       (concat "refs/publish" (match-string 1 branch-merge))))
+		       (format "refs/%s%s/%s" status (match-string 1 branch-merge) branch)))
 	 (branch-remote (and branch (magit-get "branch" branch "remote"))))
 
     (message "Args: %s "
@@ -351,6 +350,14 @@
 
     (magit-run-git-async "push" "-v" branch-remote
     			 (concat rev ":" branch-pub))))
+
+(defun magit-gerrit-create-review ()
+  (interactive)
+  (magit-gerrit-push-review 'publish))
+
+(defun magit-gerrit-create-draft ()
+  (interactive)
+  (magit-gerrit-push-review 'drafts))
 
 (defun magit-gerrit-abandon-review ()
   (interactive)
@@ -372,6 +379,8 @@
   (magit-key-mode-add-group 'gerrit)
   (magit-key-mode-insert-action 'gerrit "P" "Push Commit For Review"
 				'magit-gerrit-create-review)
+  (magit-key-mode-insert-action 'gerrit "W" "Push Commit For Draft Review"
+				'magit-gerrit-create-draft)
   (magit-key-mode-insert-action 'gerrit "A" "Add Reviewer"
 				'magit-gerrit-add-reviewer)
   (magit-key-mode-insert-action 'gerrit "V" "Verify"

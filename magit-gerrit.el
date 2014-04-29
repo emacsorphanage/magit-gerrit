@@ -1,8 +1,10 @@
-;;; magit-gerrit.el ---
+;;; magit-gerrit.el --- Magit plugin for Gerrit Code Review
 ;;
 ;; Copyright (C) 2013 Brian Fransioli
 ;;
 ;; Author: Brian Fransioli <assem@terranpro.org>
+;; URL: https://github.com/terranpro/magit-gerrit
+;; Package-Requires: ((magit "1.2.0"))
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as

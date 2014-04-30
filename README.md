@@ -7,9 +7,15 @@ Magit plugin for Gerrit Code Review
 Installation
 ============
 
-```
-;; add magit-gerrit to `load-path'
+If you have a recent Emacs with `package.el`, you can install `magit-gerrit`
+from [MELPA](http://melpa.milkbox.net/).
 
+Otherwise, you'll have to download `magit-gerrit.el` and ensure it is in
+a directory in your `load-path`.
+
+Then:
+
+```
 (require 'magit-gerrit)
 
 ;; if remote url is not using the default gerrit port and

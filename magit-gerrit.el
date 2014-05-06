@@ -130,7 +130,7 @@
   (gerrit-ssh-cmd "review" "--project" prj "--verified" score rev))
 
 (defun magit-gerrit-get-remote-url ()
-  (magit-get "remote" magit-gerrit-remote "url"))
+  (magit-git-string "ls-remote" "--get-url" magit-gerrit-remote))
 
 (defun magit-gerrit-get-project ()
  (let* ((regx (rx (zero-or-one ?:) (zero-or-more (any digit)) ?/

@@ -254,8 +254,9 @@
 	    (dir default-directory)
 	    (buf (get-buffer-create magit-diff-buffer-name)))
 	(let* ((magit-custom-options (list ref))
-	       (magit-proc (magit-fetch-current)))
-	  (message "Waiting for git fetch to complete...")
+           (magit-proc (magit-fetch magit-gerrit-remote)))
+      (message (format "Waiting a git fetch from %s to complete..."
+                       magit-gerrit-remote))
 	  (magit-process-wait))
 	(message (format "Generating Gerrit Patchset for refs %s dir %s" ref dir))
 	(magit-diff "FETCH_HEAD~1..FETCH_HEAD")))))

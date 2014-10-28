@@ -148,6 +148,19 @@
 	      "...")
     str))
 
+(defun magit-gerrit-create-branch-force (branch parent)
+  "Switch 'HEAD' to new BRANCH at revision PARENT and update working tree.
+Fails if working tree or staging area contain uncommitted changes.
+Succeed even if branch already exist
+\('git checkout -B BRANCH REVISION')."
+  (cond ((run-hook-with-args-until-success
+          'magit-create-branch-hook branch parent))
+        ((and branch (not (string= branch "")))
+         (magit-save-some-buffers)
+         (magit-run-git "checkout" magit-custom-options
+                        "-B" branch parent))))
+
+
 (defun magit-gerrit-pretty-print-reviewer (name email crdone vrdone)
   (let* ((wid (1- (window-width)))
 	 (crstr (propertize (if crdone "C" " ")
@@ -264,7 +277,20 @@
 (defun magit-gerrit-download-patchset ()
   "Download a Gerrit Review Patchset"
   (interactive)
-  (error "Not Yet Implemented!"))
+  (let ((jobj (magit-gerrit-review-at-point)))
+    (when jobj
+      (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
+	    (dir default-directory)
+        (branch (format "review/%s/%s"
+                        (cdr (assoc 'username (assoc 'owner jobj)))
+                        (cdr (assoc 'topic jobj)))))
+	(let* ((magit-custom-options (list ref))
+           (magit-proc (magit-fetch magit-gerrit-remote)))
+      (message (format "Waiting a git fetch from %s to complete..."
+                       magit-gerrit-remote))
+	  (magit-process-wait))
+	(message (format "Checking out refs %s to %s in %s" ref branch dir))
+	(magit-gerrit-create-branch-force branch "FETCH_HEAD")))))
 
 (defun magit-insert-gerrit-reviews ()
   (magit-gerrit-section 'gerrit-reviews

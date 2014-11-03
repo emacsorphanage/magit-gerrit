@@ -292,6 +292,13 @@ Succeed even if branch already exist
 	(message (format "Checking out refs %s to %s in %s" ref branch dir))
 	(magit-gerrit-create-branch-force branch "FETCH_HEAD")))))
 
+(defun magit-gerrit-browse-review ()
+  "Browse the Gerrit Review with a browser."
+  (interactive)
+  (let ((jobj (magit-gerrit-review-at-point)))
+    (if jobj
+        (browse-url (cdr (assoc 'url jobj))))))
+
 (defun magit-insert-gerrit-reviews ()
   (magit-gerrit-section 'gerrit-reviews
 			"Reviews:" 'magit-gerrit-wash-reviews
@@ -424,7 +431,8 @@ Succeed even if branch already exist
 				'magit-gerrit-submit-review)
   (magit-key-mode-insert-action 'gerrit "B" "Abandon Review"
 				'magit-gerrit-abandon-review)
-
+  (magit-key-mode-insert-action 'gerrit "b" "Browse Review"
+                'magit-gerrit-browse-review)
   (magit-key-mode-generate 'gerrit))
 
 (defvar magit-gerrit-mode-map

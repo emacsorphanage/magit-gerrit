@@ -283,7 +283,7 @@ Succeed even if branch already exist
 	    (dir default-directory)
         (branch (format "review/%s/%s"
                         (cdr (assoc 'username (assoc 'owner jobj)))
-                        (cdr (assoc 'topic jobj)))))
+                        (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
 	(let* ((magit-custom-options (list ref))
            (magit-proc (magit-fetch magit-gerrit-remote)))
       (message (format "Waiting a git fetch from %s to complete..."

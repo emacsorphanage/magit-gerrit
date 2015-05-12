@@ -433,7 +433,9 @@ Succeed even if branch already exist
 				'magit-gerrit-abandon-review)
   (magit-key-mode-insert-action 'gerrit "b" "Browse Review"
                 'magit-gerrit-browse-review)
-  (magit-key-mode-generate 'gerrit))
+  (magit-key-mode-generate 'gerrit)
+
+  (magit-key-mode-insert-action 'dispatch (kbd "T") "Gerrit" 'magit-key-mode-popup-gerrit)  )
 
 (defvar magit-gerrit-mode-map
   (let ((map (make-sparse-keymap)))

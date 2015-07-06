@@ -4,7 +4,7 @@
 ;;
 ;; Author: Brian Fransioli <assem@terranpro.org>
 ;; URL: https://github.com/terranpro/magit-gerrit
-;; Package-Requires: ((magit "1.2.0"))
+;; Package-Requires: ((magit "2.1.0"))
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -274,8 +274,7 @@ Succeed even if branch already exist
   (let ((jobj (magit-gerrit-review-at-point)))
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
-	    (dir default-directory)
-	    (buf (get-buffer-create magit-diff-buffer-name)))
+	    (dir default-directory))
 	(let* ((magit-custom-options (list ref))
 	   (magit-proc (magit-fetch magit-gerrit-remote)))
       (message (format "Waiting a git fetch from %s to complete..."

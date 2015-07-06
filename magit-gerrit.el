@@ -36,15 +36,15 @@
 ;;
 ;;
 ;; M-x `magit-status'
-;; T C-h  <= magit-gerrit uses the T prefix, see help
+;; h R  <= magit-gerrit uses the R prefix, see help
 ;;
 ;;; Workflow:
 ;;
 ;; 1) *check out branch => changes => (ma)git commit*
-;; 2) T P  <= [gerri*T* *P*ush for review]
-;; 3) T A  <= [gerri*T* *A*dd reviewer] (by email address)
+;; 2) R P  <= [ger*R*it *P*ush for review]
+;; 3) R A  <= [ger*R*it *A*dd reviewer] (by email address)
 ;; 4) *wait for verification/code reviews* [approvals shown in status]
-;; 5) T S  <= [gerri*T* *S*ubmit review]
+;; 5) R S  <= [ger*R*it *S*ubmit review]
 ;;
 ;;; Other Comments:
 ;; `magit-gerrit-ssh-creds' is buffer local, so if you work with
@@ -55,7 +55,7 @@
 ;; `magit-gerrit-remote' should be adjusted accordingly (e.g. "gerrit")
 ;;
 ;; Recommended to auto add reviewers via git hooks (precommit), rather
-;; than manually performing 'T A' for every review.
+;; than manually performing 'R A' for every review.
 ;;
 ;; `magit-gerrit' will be enabled automatically on `magit-status' if
 ;; the git remote repo uses the same creds found in

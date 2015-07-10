@@ -161,8 +161,7 @@ Succeed even if branch already exist
 	  'magit-create-branch-hook branch parent))
 	((and branch (not (string= branch "")))
 	 (magit-save-repository-buffers)
-	 (magit-run-git "checkout" magit-custom-options
-			"-B" branch parent))))
+	 (magit-run-git "checkout" "-B" branch parent))))
 
 
 (defun magit-gerrit-pretty-print-reviewer (name email crdone vrdone)
@@ -275,10 +274,9 @@ Succeed even if branch already exist
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
 	    (dir default-directory))
-	(let* ((magit-custom-options (list ref))
-	   (magit-proc (magit-fetch magit-gerrit-remote)))
-      (message (format "Waiting a git fetch from %s to complete..."
-		       magit-gerrit-remote))
+	(let* ((magit-proc (magit-fetch magit-gerrit-remote ref)))
+	  (message (format "Waiting a git fetch from %s to complete..."
+			   magit-gerrit-remote))
 	  (magit-process-wait))
 	(message (format "Generating Gerrit Patchset for refs %s dir %s" ref dir))
 	(magit-diff "FETCH_HEAD~1..FETCH_HEAD")))))
@@ -290,13 +288,12 @@ Succeed even if branch already exist
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
 	    (dir default-directory)
-	(branch (format "review/%s/%s"
-			(cdr (assoc 'username (assoc 'owner jobj)))
-			(cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
-	(let* ((magit-custom-options (list ref))
-	   (magit-proc (magit-fetch magit-gerrit-remote)))
-      (message (format "Waiting a git fetch from %s to complete..."
-		       magit-gerrit-remote))
+	    (branch (format "review/%s/%s"
+			    (cdr (assoc 'username (assoc 'owner jobj)))
+			    (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
+	(let* ((magit-proc (magit-fetch magit-gerrit-remote ref)))
+	  (message (format "Waiting a git fetch from %s to complete..."
+			   magit-gerrit-remote))
 	  (magit-process-wait))
 	(message (format "Checking out refs %s to %s in %s" ref branch dir))
 	(magit-gerrit-create-branch-force branch "FETCH_HEAD")))))

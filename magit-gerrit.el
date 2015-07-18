@@ -277,7 +277,7 @@ Succeed even if branch already exist
 	    (dir default-directory)
 	    (buf (get-buffer-create magit-diff-buffer-name)))
 	(let* ((magit-custom-options (list ref))
-	   (magit-proc (magit-fetch magit-gerrit-remote)))
+         (magit-proc (magit-fetch magit-gerrit-remote magit-custom-options)))
       (message (format "Waiting a git fetch from %s to complete..."
 		       magit-gerrit-remote))
 	  (magit-process-wait))
@@ -295,7 +295,7 @@ Succeed even if branch already exist
 			(cdr (assoc 'username (assoc 'owner jobj)))
 			(cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
 	(let* ((magit-custom-options (list ref))
-	   (magit-proc (magit-fetch magit-gerrit-remote)))
+         (magit-proc (magit-fetch magit-gerrit-remote magit-custom-options)))
       (message (format "Waiting a git fetch from %s to complete..."
 		       magit-gerrit-remote))
 	  (magit-process-wait))

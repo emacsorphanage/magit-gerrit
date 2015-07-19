@@ -139,7 +139,7 @@
 (defun magit-gerrit-get-project ()
  (let* ((regx (rx (zero-or-one ?:) (zero-or-more (any digit)) ?/
 		  (group (not (any "/")))
-		  (group (one-or-more any))))
+		  (group (one-or-more (not (any "."))))))
 	(str (or (magit-gerrit-get-remote-url) ""))
 	(sstr (car (last (split-string str "//")))))
    (when (string-match regx sstr)

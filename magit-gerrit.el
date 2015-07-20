@@ -139,7 +139,7 @@
 (defun magit-gerrit-get-project ()
  (let* ((regx (rx (zero-or-one ?:) (zero-or-more (any digit)) ?/
 		  (group (not (any "/")))
-		  (group (one-or-more any))))
+		  (group (one-or-more (not (any "."))))))
 	(str (or (magit-gerrit-get-remote-url) ""))
 	(sstr (car (last (split-string str "//")))))
    (when (string-match regx sstr)
@@ -277,7 +277,7 @@ Succeed even if branch already exist
 	    (dir default-directory)
 	    (buf (get-buffer-create magit-diff-buffer-name)))
 	(let* ((magit-custom-options (list ref))
-	   (magit-proc (magit-fetch magit-gerrit-remote)))
+         (magit-proc (magit-fetch magit-gerrit-remote magit-custom-options)))
       (message (format "Waiting a git fetch from %s to complete..."
 		       magit-gerrit-remote))
 	  (magit-process-wait))
@@ -295,7 +295,7 @@ Succeed even if branch already exist
 			(cdr (assoc 'username (assoc 'owner jobj)))
 			(cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
 	(let* ((magit-custom-options (list ref))
-	   (magit-proc (magit-fetch magit-gerrit-remote)))
+         (magit-proc (magit-fetch magit-gerrit-remote magit-custom-options)))
       (message (format "Waiting a git fetch from %s to complete..."
 		       magit-gerrit-remote))
 	  (magit-process-wait))

@@ -354,8 +354,9 @@ Succeed even if branch already exist
     (magit-refresh)))
 
 (defun magit-gerrit-submit-review (args)
+  "Submit a Gerrit Code Review"
+  ;; "ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit "
   (interactive (magit-gerrit-popup-args))
-  "ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit "
   (gerrit-ssh-cmd "review"
 		  (cdr-safe (assoc
 			     'revision
@@ -365,7 +366,10 @@ Succeed even if branch already exist
 		  (magit-gerrit-get-project)
 		  "--submit"
 		  args)
-  (magit-fetch-current))
+  (let* ((branch (or (magit-get-current-branch)
+		     (error "Don't push a detached head.  That's gross")))
+	 (branch-remote (and branch (magit-get "branch" branch "remote"))))
+    (magit-fetch-current branch-remote)))
 
 (defun magit-gerrit-push-review (status)
   (let* ((branch (or (magit-get-current-branch)

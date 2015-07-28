@@ -379,7 +379,8 @@ Succeed even if branch already exist
 		  (magit-gerrit-get-project)
 		  "--submit"
 		  args)
-  (magit-fetch-current))
+  (magit-fetch-current
+   (magit-get "branch" (magit-get-current-branch) "remote")))
 
 (defun magit-gerrit-push-review (status)
   (let* ((branch (or (magit-get-current-branch)

@@ -308,6 +308,17 @@ Succeed even if branch already exist
     (if jobj
 	(browse-url (cdr (assoc 'url jobj))))))
 
+(defun magit-gerrit-copy-review ()
+  "Browse the Gerrit Review with a browser."
+  (interactive)
+  (let ((jobj (magit-gerrit-review-at-point)))
+    (if jobj
+      (with-temp-buffer
+        (insert
+         (concat (cdr (assoc 'url jobj)) " "
+                 (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t))))
+        (clipboard-kill-region (point-min) (point-max))))))
+
 (defun magit-insert-gerrit-reviews ()
   (magit-gerrit-section 'gerrit-reviews
 			"Reviews:" 'magit-gerrit-wash-reviews
@@ -458,7 +469,8 @@ Succeed even if branch already exist
 	     (?D "Download Patchset"                               magit-gerrit-download-patchset)
 	     (?S "Submit Review"                                   magit-gerrit-submit-review)
 	     (?B "Abandon Review"                                  magit-gerrit-abandon-review)
-	     (?b "Browse Review"                                   magit-gerrit-browse-review))
+	     (?b "Browse Review"                                   magit-gerrit-browse-review)
+       (?c "Copy Review"                                     magit-gerrit-copy-review))
   :options '((?m "Comment"                      "--message "       magit-gerrit-read-comment)))
 
 

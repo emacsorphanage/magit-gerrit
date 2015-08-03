@@ -308,16 +308,26 @@ Succeed even if branch already exist
     (if jobj
 	(browse-url (cdr (assoc 'url jobj))))))
 
-(defun magit-gerrit-copy-review ()
-  "Browse the Gerrit Review with a browser."
-  (interactive)
+(defun magit-gerrit-copy-review (with-commit-message)
+  "Copy review url and commit message."
   (let ((jobj (magit-gerrit-review-at-point)))
     (if jobj
       (with-temp-buffer
         (insert
-         (concat (cdr (assoc 'url jobj)) " "
-                 (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t))))
+         (concat (cdr (assoc 'url jobj))
+                 (if with-commit-message
+                     (concat " " (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t))))))
         (clipboard-kill-region (point-min) (point-max))))))
+
+(defun magit-gerrit-copy-review-url ()
+  "Copy review url only"
+  (interactive)
+  (magit-gerrit-copy-review nil))
+
+(defun magit-gerrit-copy-review-url-commit-message ()
+  "Copy review url with commit message"
+  (interactive)
+  (magit-gerrit-copy-review t))
 
 (defun magit-insert-gerrit-reviews ()
   (magit-gerrit-section 'gerrit-reviews
@@ -470,14 +480,21 @@ Succeed even if branch already exist
 	     (?D "Download Patchset"                               magit-gerrit-download-patchset)
 	     (?S "Submit Review"                                   magit-gerrit-submit-review)
 	     (?B "Abandon Review"                                  magit-gerrit-abandon-review)
-	     (?b "Browse Review"                                   magit-gerrit-browse-review)
-       (?c "Copy Review"                                     magit-gerrit-copy-review))
+	     (?b "Browse Review"                                   magit-gerrit-browse-review))
   :options '((?m "Comment"                      "--message "       magit-gerrit-read-comment)))
-
 
 ;; Attach Magit Gerrit to Magit's default help popup
 (magit-define-popup-action 'magit-dispatch-popup ?R "Gerrit"
   'magit-gerrit-popup)
+
+(magit-define-popup magit-gerrit-copy-review-popup
+  "Popup console for copy review to clipboard."
+  'magit-gerrit
+  :actions '((?C "url and commit message" magit-gerrit-copy-review-url-commit-message)
+             (?c "url only" magit-gerrit-copy-review-url)))
+
+(magit-define-popup-action 'magit-gerrit-popup ?c "Copy Review"
+  'magit-gerrit-copy-review-popup)
 
 (defvar magit-gerrit-mode-map
   (let ((map (make-sparse-keymap)))

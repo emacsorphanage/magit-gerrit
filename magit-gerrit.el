@@ -381,18 +381,37 @@ Succeed even if branch already exist
 	 (rev (magit-rev-parse (or commitid
 				   (error "Select a commit for review"))))
 
-	 (branch-merge (and branch (magit-get "branch" branch "merge")))
-	 (branch-pub (progn
-		       (string-match (rx "refs/heads" (group (one-or-more any)))
-				    branch-merge)
-		       (format "refs/%s%s/%s" status (match-string 1 branch-merge) branch)))
 	 (branch-remote (and branch (magit-get "branch" branch "remote"))))
 
     ;; (message "Args: %s "
     ;;	     (concat rev ":" branch-pub))
 
-    (magit-run-git-async "push" "-v" branch-remote
-			 (concat rev ":" branch-pub))))
+    (let* ((branch-merge (if (string= branch-remote ".")
+			     (completing-read
+			      "Remote Branch: "
+			      (let ((rbs (magit-list-remote-branch-names)))
+				(mapcar
+				 #'(lambda (rb)
+				     (and (string-match (rx bos
+							    (one-or-more (not (any "/")))
+							    "/"
+							    (group (one-or-more any))
+							    eos)
+							rb)
+					  (concat "refs/heads/" (match-string 1 rb))))
+				 rbs)))
+			   (and branch (magit-get "branch" branch "merge"))))
+	   (branch-pub (progn
+			 (string-match (rx "refs/heads" (group (one-or-more any)))
+				       branch-merge)
+			 (format "refs/%s%s/%s" status (match-string 1 branch-merge) branch))))
+
+
+      (when (string= branch-remote ".")
+	(setq branch-remote magit-gerrit-remote))
+
+      (magit-run-git-async "push" "-v" branch-remote
+			   (concat rev ":" branch-pub)))))
 
 (defun magit-gerrit-create-review ()
   (interactive)
@@ -530,6 +549,7 @@ and port is the default gerrit ssh port."
 
 ;; Try to auto enable magit-gerrit in the magit-status buffer
 (add-hook 'magit-status-mode-hook #'magit-gerrit-check-enable t)
+(add-hook 'magit-log-mode-hook #'magit-gerrit-check-enable t)
 
 (provide 'magit-gerrit)
 

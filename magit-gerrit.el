@@ -36,15 +36,15 @@
 ;;
 ;;
 ;; M-x `magit-status'
-;; T C-h  <= magit-gerrit uses the T prefix, see help
+;; h R  <= magit-gerrit uses the R prefix, see help
 ;;
 ;;; Workflow:
 ;;
 ;; 1) *check out branch => changes => (ma)git commit*
-;; 2) T P  <= [gerri*T* *P*ush for review]
-;; 3) T A  <= [gerri*T* *A*dd reviewer] (by email address)
+;; 2) R P  <= [ger*R*it *P*ush for review]
+;; 3) R A  <= [ger*R*it *A*dd reviewer] (by email address)
 ;; 4) *wait for verification/code reviews* [approvals shown in status]
-;; 5) T S  <= [gerri*T* *S*ubmit review]
+;; 5) R S  <= [ger*R*it *S*ubmit review]
 ;;
 ;;; Other Comments:
 ;; `magit-gerrit-ssh-creds' is buffer local, so if you work with
@@ -55,7 +55,7 @@
 ;; `magit-gerrit-remote' should be adjusted accordingly (e.g. "gerrit")
 ;;
 ;; Recommended to auto add reviewers via git hooks (precommit), rather
-;; than manually performing 'T A' for every review.
+;; than manually performing 'R A' for every review.
 ;;
 ;; `magit-gerrit' will be enabled automatically on `magit-status' if
 ;; the git remote repo uses the same creds found in
@@ -161,8 +161,7 @@ Succeed even if branch already exist
 	  'magit-create-branch-hook branch parent))
 	((and branch (not (string= branch "")))
 	 (magit-save-repository-buffers)
-	 (magit-run-git "checkout" magit-custom-options
-			"-B" branch parent))))
+	 (magit-run-git "checkout" "-B" branch parent))))
 
 
 (defun magit-gerrit-pretty-print-reviewer (name email crdone vrdone)
@@ -275,10 +274,9 @@ Succeed even if branch already exist
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
 	    (dir default-directory))
-	(let* ((magit-custom-options (list ref))
-         (magit-proc (magit-fetch magit-gerrit-remote magit-custom-options)))
-      (message (format "Waiting a git fetch from %s to complete..."
-		       magit-gerrit-remote))
+	(let* ((magit-proc (magit-fetch magit-gerrit-remote ref)))
+	  (message (format "Waiting a git fetch from %s to complete..."
+			   magit-gerrit-remote))
 	  (magit-process-wait))
 	(message (format "Generating Gerrit Patchset for refs %s dir %s" ref dir))
 	(magit-diff "FETCH_HEAD~1..FETCH_HEAD")))))
@@ -290,13 +288,12 @@ Succeed even if branch already exist
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
 	    (dir default-directory)
-	(branch (format "review/%s/%s"
-			(cdr (assoc 'username (assoc 'owner jobj)))
-			(cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
-	(let* ((magit-custom-options (list ref))
-         (magit-proc (magit-fetch magit-gerrit-remote magit-custom-options)))
-      (message (format "Waiting a git fetch from %s to complete..."
-		       magit-gerrit-remote))
+	    (branch (format "review/%s/%s"
+			    (cdr (assoc 'username (assoc 'owner jobj)))
+			    (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
+	(let* ((magit-proc (magit-fetch magit-gerrit-remote ref)))
+	  (message (format "Waiting a git fetch from %s to complete..."
+			   magit-gerrit-remote))
 	  (magit-process-wait))
 	(message (format "Checking out refs %s to %s in %s" ref branch dir))
 	(magit-gerrit-create-branch-force branch "FETCH_HEAD")))))
@@ -378,8 +375,9 @@ Succeed even if branch already exist
     (magit-refresh)))
 
 (defun magit-gerrit-submit-review (args)
+  "Submit a Gerrit Code Review"
+  ;; "ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit "
   (interactive (magit-gerrit-popup-args))
-  "ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit "
   (gerrit-ssh-cmd "review"
 		  (cdr-safe (assoc
 			     'revision
@@ -389,8 +387,10 @@ Succeed even if branch already exist
 		  (magit-gerrit-get-project)
 		  "--submit"
 		  args)
-  (magit-fetch-current
-   (magit-get "branch" (magit-get-current-branch) "remote")))
+  (let* ((branch (or (magit-get-current-branch)
+		     (error "Don't push a detached head.  That's gross")))
+	 (branch-remote (and branch (magit-get "branch" branch "remote"))))
+    (magit-fetch-current branch-remote)))
 
 (defun magit-gerrit-push-review (status)
   (let* ((branch (or (magit-get-current-branch)
@@ -402,18 +402,37 @@ Succeed even if branch already exist
 	 (rev (magit-rev-parse (or commitid
 				   (error "Select a commit for review"))))
 
-	 (branch-merge (and branch (magit-get "branch" branch "merge")))
-	 (branch-pub (progn
-		       (string-match (rx "refs/heads" (group (one-or-more any)))
-				    branch-merge)
-		       (format "refs/%s%s/%s" status (match-string 1 branch-merge) branch)))
 	 (branch-remote (and branch (magit-get "branch" branch "remote"))))
 
     ;; (message "Args: %s "
     ;;	     (concat rev ":" branch-pub))
 
-    (magit-run-git-async "push" "-v" branch-remote
-			 (concat rev ":" branch-pub))))
+    (let* ((branch-merge (if (string= branch-remote ".")
+			     (completing-read
+			      "Remote Branch: "
+			      (let ((rbs (magit-list-remote-branch-names)))
+				(mapcar
+				 #'(lambda (rb)
+				     (and (string-match (rx bos
+							    (one-or-more (not (any "/")))
+							    "/"
+							    (group (one-or-more any))
+							    eos)
+							rb)
+					  (concat "refs/heads/" (match-string 1 rb))))
+				 rbs)))
+			   (and branch (magit-get "branch" branch "merge"))))
+	   (branch-pub (progn
+			 (string-match (rx "refs/heads" (group (one-or-more any)))
+				       branch-merge)
+			 (format "refs/%s%s/%s" status (match-string 1 branch-merge) branch))))
+
+
+      (when (string= branch-remote ".")
+	(setq branch-remote magit-gerrit-remote))
+
+      (magit-run-git-async "push" "-v" branch-remote
+			   (concat rev ":" branch-pub)))))
 
 (defun magit-gerrit-create-review ()
   (interactive)
@@ -559,6 +578,7 @@ and port is the default gerrit ssh port."
 
 ;; Try to auto enable magit-gerrit in the magit-status buffer
 (add-hook 'magit-status-mode-hook #'magit-gerrit-check-enable t)
+(add-hook 'magit-log-mode-hook #'magit-gerrit-check-enable t)
 
 (provide 'magit-gerrit)
 

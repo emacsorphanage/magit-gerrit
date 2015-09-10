@@ -71,6 +71,8 @@
 ;;; Code:
 
 (require 'magit)
+(if (locate-library "magit-popup")
+    (require 'magit-popup))
 (require 'json)
 
 (eval-when-compile

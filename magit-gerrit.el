@@ -89,6 +89,9 @@
 (defvar-local magit-gerrit-remote "origin"
   "Default remote name to use for gerrit (e.g. \"origin\", \"gerrit\")")
 
+(defvar-local magit-gerrit-use-topics nil
+  "Flag that indicates the default option of using a topic when pushing to remote")
+
 (defun gerrit-command (cmd &rest args)
   (let ((gcmd (concat
 	       "-x -p 29418 "
@@ -145,6 +148,41 @@
    (when (string-match regx sstr)
      (concat (match-string 1 sstr)
 	     (match-string 2 sstr)))))
+
+(defun magit-gerrit-query (prompt cands)
+  (ido-completing-read
+   prompt
+   cands
+   nil
+   t))
+
+(defun magit-gerrit-query-remote-branch-merge ()
+  (interactive)
+
+  (magit-gerrit-query
+   "Remote Branch: "
+   (let ((rbs (magit-list-remote-branch-names)))
+     (mapcar
+      #'(lambda (rb)
+	  (and (string-match (rx bos
+				 (one-or-more (not (any "/")))
+				 "/"
+				 (group (one-or-more any))
+				 eos)
+			     rb)
+	       (concat ;;"refs/publish/"
+		(match-string 1 rb)
+		)))
+      rbs))))
+
+(defun magit-gerrit-convert-ref (ref-str from &optional to)
+  "Cuts or converts a ref string prefix, e.g.  refs/heads/branch -> refs/publish/branch"
+  (string-match (concat from
+			(rx (group (one-or-more any))))
+		ref-str)
+  (format "%s%s"
+	  (or (and to (format "refs/%s/" to)) "")
+	  (match-string 1 ref-str)))
 
 (defun magit-gerrit-string-trunc (str maxlen)
   (if (> (length str) maxlen)
@@ -311,11 +349,11 @@ Succeed even if branch already exist
   (let ((jobj (magit-gerrit-review-at-point)))
     (if jobj
       (with-temp-buffer
-        (insert
-         (concat (cdr (assoc 'url jobj))
-                 (if with-commit-message
-                     (concat " " (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t))))))
-        (clipboard-kill-region (point-min) (point-max))))))
+	(insert
+	 (concat (cdr (assoc 'url jobj))
+		 (if with-commit-message
+		     (concat " " (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t))))))
+	(clipboard-kill-region (point-min) (point-max))))))
 
 (defun magit-gerrit-copy-review-url ()
   "Copy review url only"
@@ -393,7 +431,7 @@ Succeed even if branch already exist
 	 (branch-remote (and branch (magit-get "branch" branch "remote"))))
     (magit-fetch-current branch-remote)))
 
-(defun magit-gerrit-push-review (status)
+(defun magit-gerrit-push-review (status use-pub-branch topic)
   (let* ((branch (or (magit-get-current-branch)
 		     (error "Don't push a detached head.  That's gross")))
 	 (commitid (or (when (eq (magit-section-type (magit-current-section))
@@ -409,24 +447,11 @@ Succeed even if branch already exist
     ;;	     (concat rev ":" branch-pub))
 
     (let* ((branch-merge (if (string= branch-remote ".")
-			     (completing-read
-			      "Remote Branch: "
-			      (let ((rbs (magit-list-remote-branch-names)))
-				(mapcar
-				 #'(lambda (rb)
-				     (and (string-match (rx bos
-							    (one-or-more (not (any "/")))
-							    "/"
-							    (group (one-or-more any))
-							    eos)
-							rb)
-					  (concat "refs/heads/" (match-string 1 rb))))
-				 rbs)))
+			     (magit-gerrit-query-remote-branch-merge)
 			   (and branch (magit-get "branch" branch "merge"))))
-	   (branch-pub (progn
-			 (string-match (rx "refs/heads" (group (one-or-more any)))
-				       branch-merge)
-			 (format "refs/%s%s/%s" status (match-string 1 branch-merge) branch))))
+	   (branch-pub (or
+			(and use-pub-branch (format "refs/%s/%s" status use-pub-branch))
+			branch-merge)))
 
 
       (when (string= branch-remote ".")
@@ -435,19 +460,49 @@ Succeed even if branch already exist
       (magit-run-git-async "push" "-v" branch-remote
 			   (concat rev ":" branch-pub)))))
 
-(defun magit-gerrit-create-review ()
-  (interactive)
-  (magit-gerrit-push-review 'publish))
+(defun magit-gerrit-create-review (&rest args)
+  (interactive (magit-gerrit-push-review-arguments))
 
-(defun magit-gerrit-create-draft ()
-  (interactive)
-  (magit-gerrit-push-review 'drafts))
+  (let ((rb (car-safe
+	     (delete-if 'null
+			(mapcar (lambda (k) (and
+					     (string-match (rx "rb:" (group (zero-or-more any))) k)
+					     (match-string 1 k)))
+				args))))
+	(tp (car-safe
+	     (delete-if 'null
+			(mapcar (lambda (k) (and
+					     (string-match (rx "tp:" (group (zero-or-more any))) k)
+					     (match-string 1 k)))
+				args)))))
+
+    (magit-gerrit-push-review 'publish rb tp)))
+
+(defun magit-gerrit-review-is-draft ()
+  (string= (cdr-safe (assoc 'status (magit-gerrit-review-at-point))) "DRAFT"))
+
+(defun magit-gerrit-create-draft (&rest args)
+  (interactive (magit-gerrit-push-review-arguments))
+
+  (let ((rb (car-safe
+	     (delete-if 'null
+			(mapcar (lambda (k) (and
+					     (string-match (rx "rb:" (group (zero-or-more any))) k)
+					     (match-string 1 k)))
+				args))))
+	(tp (car-safe
+	     (delete-if 'null
+			(mapcar (lambda (k) (and
+					     (string-match (rx "tp:" (group (zero-or-more any))) k)
+					     (match-string 1 k)))
+				args)))))
+    (magit-gerrit-push-review 'drafts rb tp)))
 
 (defun magit-gerrit-publish-draft ()
   (interactive)
   (let ((prj (magit-gerrit-get-project))
 	(id (cdr-safe (assoc 'id
-		     (magit-gerrit-review-at-point))))
+			     (magit-gerrit-review-at-point))))
 	(rev (cdr-safe (assoc
 			'revision
 			(cdr-safe (assoc 'currentPatchSet
@@ -486,16 +541,77 @@ Succeed even if branch already exist
 
 (defun magit-gerrit-create-branch (branch parent))
 
+(magit-define-popup magit-gerrit-copy-review-popup
+  "Popup console for copy review to clipboard."
+  'magit-gerrit
+  :actions '((?C "url and commit message" magit-gerrit-copy-review-url-commit-message)
+	     (?c "url only" magit-gerrit-copy-review-url)))
+
+(magit-define-popup magit-gerrit-push-review-popup
+  "Popup console for pushing reviews to Gerrit"
+  'magit-gerrit
+  :actions '((?P "Push"                              magit-gerrit-create-review)
+	     (?D "Push Commit For Draft Review"      magit-gerrit-create-draft))
+  :options '((?t "Topic"           ""       read-from-minibuffer)
+	     (?b "Remote Branch"   ""       read-from-minibuffer)))
+
+(defun magit-gerrit-build-push-review-popup ()
+  "Fill in appropriate values for remote branch and topic and then show the push review popup"
+  (interactive)
+  (let* ((branch (magit-get-current-branch))
+	 (branch-merge (magit-get "branch" branch "merge")))
+
+    (message "branch merge: %s\n" branch-merge)
+
+    (magit-define-popup-action 'magit-gerrit-push-review-popup ?P "Push" 'magit-gerrit-create-review)
+    (magit-define-popup-action 'magit-gerrit-push-review-popup ?D "Push Draft Review" 'magit-gerrit-create-draft)
+
+    (if (magit-gerrit-review-is-draft)
+	(progn (magit-define-popup-action 'magit-gerrit-push-review-popup ?B "Publish Draft" 'magit-gerrit-publish-draft)
+	       (magit-define-popup-action 'magit-gerrit-push-review-popup ?K "Delete Draft" 'magit-gerrit-delete-draft))
+
+
+      (magit-remove-popup-key 'magit-gerrit-push-review-popup :action ?B)
+      (magit-remove-popup-key 'magit-gerrit-push-review-popup :action ?K))
+
+
+
+    (magit-define-popup-option 'magit-gerrit-push-review-popup ?b "Remote Branch"
+      "rb:"
+      #'(lambda (&rest args)
+	  (interactive)
+	  (magit-gerrit-query-remote-branch-merge))
+      branch-merge)
+
+    (magit-define-popup-option 'magit-gerrit-push-review-popup ?t "Topic"
+      "tp:"
+      #'(lambda (&rest args)
+	  (interactive)
+	  (read-from-minibuffer "Topic: "))
+      branch)
+
+    (setq magit-gerrit-push-review-arguments nil)
+
+    (when magit-gerrit-use-topics
+      (setq magit-gerrit-push-review-arguments (list (concat "tp:" branch))))
+
+    (setq magit-gerrit-push-review-arguments
+	  (append magit-gerrit-push-review-arguments
+		  (list (concat "rb:" (magit-gerrit-convert-ref branch-merge "refs/heads/"))))))
+
+  (magit-gerrit-push-review-popup))
+
 (magit-define-popup magit-gerrit-popup
   "Popup console for magit gerrit commands."
   'magit-gerrit
-  :actions '((?P "Push Commit For Review"                          magit-gerrit-create-review)
-	     (?W "Push Commit For Draft Review"                    magit-gerrit-create-draft)
+  :actions '((?P "Push Commit For Review"                          magit-gerrit-build-push-review-popup)
+
 	     (?p "Publish Draft Patchset"                          magit-gerrit-publish-draft)
 	     (?k "Delete Draft"                                    magit-gerrit-delete-draft)
 	     (?A "Add Reviewer"                                    magit-gerrit-add-reviewer)
 	     (?V "Verify"                                          magit-gerrit-verify-review)
 	     (?C "Code Review"                                     magit-gerrit-code-review)
+	     (?c "Copy Review"                                     magit-gerrit-copy-review)
 	     (?d "View Patchset Diff"                              magit-gerrit-view-patchset-diff)
 	     (?D "Download Patchset"                               magit-gerrit-download-patchset)
 	     (?S "Submit Review"                                   magit-gerrit-submit-review)
@@ -507,14 +623,8 @@ Succeed even if branch already exist
 (magit-define-popup-action 'magit-dispatch-popup ?R "Gerrit"
   'magit-gerrit-popup)
 
-(magit-define-popup magit-gerrit-copy-review-popup
-  "Popup console for copy review to clipboard."
-  'magit-gerrit
-  :actions '((?C "url and commit message" magit-gerrit-copy-review-url-commit-message)
-             (?c "url only" magit-gerrit-copy-review-url)))
-
-(magit-define-popup-action 'magit-gerrit-popup ?c "Copy Review"
-  'magit-gerrit-copy-review-popup)
+(magit-define-popup-action 'magit-gerrit-popup ?P "Push Review"
+  'magit-gerrit-build-push-review-popup)
 
 (defvar magit-gerrit-mode-map
   (let ((map (make-sparse-keymap)))

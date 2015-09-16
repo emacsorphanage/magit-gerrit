@@ -227,7 +227,8 @@ Succeed even if branch already exist
 	 (num (cdr-safe (assoc 'number jobj)))
 	 (subj (cdr-safe (assoc 'subject jobj)))
 	 (owner (cdr-safe (assoc 'owner jobj)))
-	 (owner-name (cdr-safe (assoc 'name owner)))
+	 (owner-name (or (cdr-safe (assoc 'name owner))
+			 (cdr-safe (assoc 'username owner))))
 	 (owner-email (cdr-safe (assoc 'email owner)))
 	 (patchsets (cdr-safe (assoc 'currentPatchSet jobj)))
 	 ;; compare w/t since when false the value is => :json-false

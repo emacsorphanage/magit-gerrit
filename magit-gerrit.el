@@ -555,26 +555,14 @@ Succeed even if branch already exist
   :options '((?t "Topic"           ""       read-from-minibuffer)
 	     (?b "Remote Branch"   ""       read-from-minibuffer)))
 
-(defun magit-gerrit-build-push-review-popup ()
+(defun magit-gerrit-build-push-popup ()
   "Fill in appropriate values for remote branch and topic and then show the push review popup"
   (interactive)
   (let* ((branch (magit-get-current-branch))
 	 (branch-merge (magit-get "branch" branch "merge")))
 
-    (message "branch merge: %s\n" branch-merge)
-
     (magit-define-popup-action 'magit-gerrit-push-review-popup ?P "Push" 'magit-gerrit-create-review)
     (magit-define-popup-action 'magit-gerrit-push-review-popup ?D "Push Draft Review" 'magit-gerrit-create-draft)
-
-    (if (magit-gerrit-review-is-draft)
-	(progn (magit-define-popup-action 'magit-gerrit-push-review-popup ?B "Publish Draft" 'magit-gerrit-publish-draft)
-	       (magit-define-popup-action 'magit-gerrit-push-review-popup ?K "Delete Draft" 'magit-gerrit-delete-draft))
-
-
-      (magit-remove-popup-key 'magit-gerrit-push-review-popup :action ?B)
-      (magit-remove-popup-key 'magit-gerrit-push-review-popup :action ?K))
-
-
 
     (magit-define-popup-option 'magit-gerrit-push-review-popup ?b "Remote Branch"
       "rb:"
@@ -601,17 +589,59 @@ Succeed even if branch already exist
 
   (magit-gerrit-push-review-popup))
 
+(defun magit-gerrit-build-review-popup ()
+  (interactive)
+
+  (magit-remove-popup-key 'magit-gerrit-review-popup :action ?P)
+  (magit-remove-popup-key 'magit-gerrit-review-popup :action ?B)
+  (magit-define-popup-action 'magit-gerrit-review-popup ?B "Abandon Review" 'magit-gerrit-abandon-review)
+
+  (when (magit-gerrit-review-is-draft)
+    (magit-define-popup-action 'magit-gerrit-review-popup ?P "Publish Draft" 'magit-gerrit-publish-draft)
+    (magit-define-popup-action 'magit-gerrit-review-popup ?B "Delete Draft" 'magit-gerrit-delete-draft))
+
+  (magit-gerrit-review-popup))
+
+
+(defun magit-gerrit-build-popup ()
+  "Display a custom gerrit popup based on current cursor location"
+  (interactive)
+
+  (let ((sectype (magit-section-type (magit-current-section))))
+    (cond ((eq sectype 'commit)
+	   (magit-gerrit-build-push-popup))
+
+	  ((eq sectype 'review)
+	   (magit-gerrit-build-review-popup))
+
+	  (t
+	   (magit-gerrit-popup)))))
+
+(magit-define-popup magit-gerrit-review-popup
+  "Popup console for manipulating gerrit reviews"
+  'magit-gerrit
+  :actions '((?A "Add Reviewer"                                    magit-gerrit-add-reviewer)
+	     (?V "Verify"                                          magit-gerrit-verify-review)
+	     (?C "Code Review"                                     magit-gerrit-code-review)
+	     (?c "Copy Review"                                     magit-gerrit-copy-review-popup)
+	     (?d "View Patchset Diff"                              magit-gerrit-view-patchset-diff)
+	     (?D "Download Patchset"                               magit-gerrit-download-patchset)
+	     (?S "Submit Review"                                   magit-gerrit-submit-review)
+	     (?B "Abandon Review"                                  magit-gerrit-abandon-review)
+	     (?b "Browse Review"                                   magit-gerrit-browse-review))
+  :options '((?m "Comment"                      "--message "       magit-gerrit-read-comment)))
+
 (magit-define-popup magit-gerrit-popup
   "Popup console for magit gerrit commands."
   'magit-gerrit
-  :actions '((?P "Push Commit For Review"                          magit-gerrit-build-push-review-popup)
+  :actions '((?P "Push Commit For Review"                          magit-gerrit-build-push-popup)
 
 	     (?p "Publish Draft Patchset"                          magit-gerrit-publish-draft)
 	     (?k "Delete Draft"                                    magit-gerrit-delete-draft)
 	     (?A "Add Reviewer"                                    magit-gerrit-add-reviewer)
 	     (?V "Verify"                                          magit-gerrit-verify-review)
 	     (?C "Code Review"                                     magit-gerrit-code-review)
-	     (?c "Copy Review"                                     magit-gerrit-copy-review)
+	     (?c "Copy Review"                                     magit-gerrit-copy-review-popup)
 	     (?d "View Patchset Diff"                              magit-gerrit-view-patchset-diff)
 	     (?D "Download Patchset"                               magit-gerrit-download-patchset)
 	     (?S "Submit Review"                                   magit-gerrit-submit-review)
@@ -621,14 +651,14 @@ Succeed even if branch already exist
 
 ;; Attach Magit Gerrit to Magit's default help popup
 (magit-define-popup-action 'magit-dispatch-popup ?R "Gerrit"
-  'magit-gerrit-popup)
+  'magit-gerrit-build-popup)
 
 (magit-define-popup-action 'magit-gerrit-popup ?P "Push Review"
   'magit-gerrit-build-push-review-popup)
 
 (defvar magit-gerrit-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "R") 'magit-gerrit-popup)
+    (define-key map (kbd "R") 'magit-gerrit-build-popup)
     map))
 
 (define-minor-mode magit-gerrit-mode "Gerrit support for Magit"

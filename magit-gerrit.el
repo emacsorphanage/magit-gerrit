@@ -247,7 +247,7 @@ Succeed even if branch already exist
 	 (codereview (string= type "Code-Review"))
 	 (score (cdr-safe (assoc 'value approval))))
 
-    (magit-insert-section (section approval)
+    (magit-insert-section (review approval)
       (magit-insert (concat
 		     (magit-gerrit-pretty-print-reviewer
 		      approvname approvemail
@@ -277,7 +277,7 @@ Succeed even if branch already exist
     (if (and beg end)
 	(delete-region beg end))
     (when (and num subj owner-name)
-      (magit-insert-section (section subj)
+      (magit-insert-section (review subj)
 	(magit-insert
 	 (propertize
 	  (magit-gerrit-pretty-print-review num subj owner-name isdraft)

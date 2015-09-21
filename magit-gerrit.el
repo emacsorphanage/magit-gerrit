@@ -150,11 +150,15 @@
 	     (match-string 2 sstr)))))
 
 (defun magit-gerrit-query (prompt cands)
-  (ido-completing-read
-   prompt
-   cands
-   nil
-   t))
+  (let ((cmp-read (if (functionp 'ido-completing-read-haha)
+		      #'ido-completing-read
+		    #'completing-read)))
+
+   (funcall cmp-read
+    prompt
+    cands
+    nil
+    t)))
 
 (defun magit-gerrit-query-remote-branch-merge ()
   (interactive)

@@ -374,12 +374,11 @@ Succeed even if branch already exist
   "Copy review url and commit message."
   (let ((jobj (magit-gerrit-review-at-point)))
     (if jobj
-      (with-temp-buffer
-	(insert
-	 (concat (cdr (assoc 'url jobj))
-		 (if with-commit-message
-		     (concat " " (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t))))))
-	(clipboard-kill-region (point-min) (point-max))))))
+        (kill-new
+         (concat
+          (cdr (assoc 'url jobj))
+          (if with-commit-message
+              (concat " " (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t)))))))))
 
 (defun magit-gerrit-copy-review-url ()
   "Copy review url only"

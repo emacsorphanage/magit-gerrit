@@ -310,22 +310,22 @@ Succeed even if branch already exist
 (defun magit-gerrit-review-at-point ()
   (get-text-property (point) 'magit-gerrit-jobj))
 
-(defun magit-gerrit-view-patchset-diff ()
-  "View the Diff for a Patchset"
+(defun magit-gerrit-view-current-patchset-diff ()
+  "View the Diff for Current Patchset"
   (interactive)
   (let ((jobj (magit-gerrit-review-at-point)))
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
 	    (dir default-directory))
-	(let* ((magit-proc (magit-fetch magit-gerrit-remote ref)))
+	(let* (magit-this-process (magit-fetch magit-gerrit-remote ref)))
 	  (message (format "Waiting a git fetch from %s to complete..."
 			   magit-gerrit-remote))
 	  (magit-process-wait))
 	(message (format "Generating Gerrit Patchset for refs %s dir %s" ref dir))
-	(magit-diff "FETCH_HEAD~1..FETCH_HEAD")))))
+	(magit-diff "FETCH_HEAD~1..FETCH_HEAD"))))
 
-(defun magit-gerrit-download-patchset ()
-  "Download a Gerrit Review Patchset"
+(defun magit-gerrit-download-current-patchset ()
+  "Download Current Gerrit Review Patchset"
   (interactive)
   (let ((jobj (magit-gerrit-review-at-point)))
     (when jobj
@@ -334,12 +334,34 @@ Succeed even if branch already exist
 	    (branch (format "review/%s/%s"
 			    (cdr (assoc 'username (assoc 'owner jobj)))
 			    (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
-	(let* ((magit-proc (magit-fetch magit-gerrit-remote ref)))
+	(let* (magit-this-process (magit-fetch magit-gerrit-remote ref)))
 	  (message (format "Waiting a git fetch from %s to complete..."
 			   magit-gerrit-remote))
 	  (magit-process-wait))
 	(message (format "Checking out refs %s to %s in %s" ref branch dir))
-	(magit-gerrit-create-branch-force branch "FETCH_HEAD")))))
+	(magit-gerrit-create-branch-force branch "FETCH_HEAD"))))
+
+(defun magit-gerrit-download-patchsets ()
+  "Download All Gerrit Review Patchset"
+  (interactive)
+  (let ((jobj (magit-gerrit-review-at-point)))
+    (when jobj
+      (let ((refs (mapcar (lambda (patchSet)
+                            (list (cdr (assoc 'number patchSet))
+                                  (aref (cdr (assoc 'parents patchSet)) 0)
+                                  (cdr (assoc 'ref patchSet))))
+                          (cdr (assoc 'patchSets jobj)))))
+        (dolist (ref refs)
+          (let ((magit-custom-options nil)
+                (branch (format "review/%s/%s/%s"
+                                (cdr (assoc 'username (assoc 'owner jobj)))
+                                (cdr (or (assoc 'topic jobj) (assoc 'number jobj)))
+                                (car ref))))
+            (magit-gerrit-create-branch-force branch (nth 1 ref)))
+          (let* ((magit-custom-options (nth 2 ref))
+                 (magit-this-process
+                  (magit-pull magit-gerrit-remote magit-custom-options)))
+            (magit-process-wait)))))))
 
 (defun magit-gerrit-browse-review ()
   "Browse the Gerrit Review with a browser."
@@ -352,12 +374,11 @@ Succeed even if branch already exist
   "Copy review url and commit message."
   (let ((jobj (magit-gerrit-review-at-point)))
     (if jobj
-      (with-temp-buffer
-	(insert
-	 (concat (cdr (assoc 'url jobj))
-		 (if with-commit-message
-		     (concat " " (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t))))))
-	(clipboard-kill-region (point-min) (point-max))))))
+        (kill-new
+         (concat
+          (cdr (assoc 'url jobj))
+          (if with-commit-message
+              (concat " " (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t)))))))))
 
 (defun magit-gerrit-copy-review-url ()
   "Copy review url only"
@@ -551,6 +572,13 @@ Succeed even if branch already exist
   :actions '((?C "url and commit message" magit-gerrit-copy-review-url-commit-message)
 	     (?c "url only" magit-gerrit-copy-review-url)))
 
+(magit-define-popup magit-gerrit-patchset-popup
+  "Popup console for download and view patchset."
+  'magit-gerrit
+  :actions '((?v "view current patchset diff" magit-gerrit-view-current-patchset-diff)
+             (?d "download current patchset" magit-gerrit-download-current-patchset)
+             (?D "download patchsets" magit-gerrit-download-patchsets)))
+
 (magit-define-popup magit-gerrit-push-review-popup
   "Popup console for pushing reviews to Gerrit"
   'magit-gerrit
@@ -628,8 +656,7 @@ Succeed even if branch already exist
 	     (?V "Verify"                                          magit-gerrit-verify-review)
 	     (?C "Code Review"                                     magit-gerrit-code-review)
 	     (?c "Copy Review"                                     magit-gerrit-copy-review-popup)
-	     (?d "View Patchset Diff"                              magit-gerrit-view-patchset-diff)
-	     (?D "Download Patchset"                               magit-gerrit-download-patchset)
+	     (?p "Patchset"                                        magit-gerrit-patchset-popup)
 	     (?S "Submit Review"                                   magit-gerrit-submit-review)
 	     (?B "Abandon Review"                                  magit-gerrit-abandon-review)
 	     (?b "Browse Review"                                   magit-gerrit-browse-review))
@@ -646,8 +673,7 @@ Succeed even if branch already exist
 	     (?V "Verify"                                          magit-gerrit-verify-review)
 	     (?C "Code Review"                                     magit-gerrit-code-review)
 	     (?c "Copy Review"                                     magit-gerrit-copy-review-popup)
-	     (?d "View Patchset Diff"                              magit-gerrit-view-patchset-diff)
-	     (?D "Download Patchset"                               magit-gerrit-download-patchset)
+	     (?p "Patchset"                                        magit-gerrit-patchset-popup)
 	     (?S "Submit Review"                                   magit-gerrit-submit-review)
 	     (?B "Abandon Review"                                  magit-gerrit-abandon-review)
 	     (?b "Browse Review"                                   magit-gerrit-browse-review))

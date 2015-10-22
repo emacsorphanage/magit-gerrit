@@ -330,16 +330,16 @@ Succeed even if branch already exist
   (let ((jobj (magit-gerrit-review-at-point)))
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
-	    (dir default-directory)
-	    (branch (format "review/%s/%s"
-			    (cdr (assoc 'username (assoc 'owner jobj)))
-			    (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
-	(let* (magit-this-process (magit-fetch magit-gerrit-remote ref)))
-	  (message (format "Waiting a git fetch from %s to complete..."
-			   magit-gerrit-remote))
-	  (magit-process-wait))
-	(message (format "Checking out refs %s to %s in %s" ref branch dir))
-	(magit-gerrit-create-branch-force branch "FETCH_HEAD"))))
+            (dir default-directory)
+            (branch (format "review/%s/%s"
+                            (cdr (assoc 'username (assoc 'owner jobj)))
+                            (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
+        (let* ((magit-this-process (magit-fetch magit-gerrit-remote ref)))
+          (message (format "Waiting a git fetch from %s to complete..."
+                           magit-gerrit-remote))
+          (magit-process-wait)
+          (message (format "Checking out refs %s to %s in %s" ref branch dir))
+          (magit-gerrit-create-branch-force branch "FETCH_HEAD"))))))
 
 (defun magit-gerrit-download-patchsets ()
   "Download All Gerrit Review Patchset"

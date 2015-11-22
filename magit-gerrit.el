@@ -118,7 +118,7 @@
 
 (defun gerrit-ssh-cmd (cmd &rest args)
   (apply #'call-process
-	 (executable-find "ssh") nil nil nil
+	 "ssh" nil nil nil
 	 (split-string (apply #'gerrit-command cmd args))))
 
 (defun gerrit-review-abandon (prj rev)
@@ -298,7 +298,7 @@ Succeed even if branch already exist
   (magit-wash-sequence #'magit-gerrit-wash-review))
 
 (defun magit-gerrit-section (section title washer &rest args)
-  (let ((magit-git-executable (executable-find "ssh"))
+  (let ((magit-git-executable "ssh")
 	(magit-git-standard-options nil))
     (magit-insert-section (section title)
       (magit-insert-heading title)

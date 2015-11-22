@@ -480,7 +480,9 @@ Succeed even if branch already exist
 			branch-merge)))
 
 
-      (when (string= branch-remote ".")
+      (when (or (string= branch-remote ".")
+		(string= branch-remote "")
+		(null branch-remote))
 	(setq branch-remote magit-gerrit-remote))
 
       (magit-run-git-async "push" "-v" branch-remote
@@ -592,7 +594,7 @@ Succeed even if branch already exist
   "Fill in appropriate values for remote branch and topic and then show the push review popup"
   (interactive)
   (let* ((branch (magit-get-current-branch))
-	 (branch-merge (magit-get "branch" branch "merge")))
+	 (branch-merge (or (magit-get "branch" branch "merge") "")))
 
     (magit-define-popup-action 'magit-gerrit-push-review-popup ?P "Push" 'magit-gerrit-create-review)
     (magit-define-popup-action 'magit-gerrit-push-review-popup ?D "Push Draft Review" 'magit-gerrit-create-draft)

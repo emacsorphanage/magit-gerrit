@@ -181,12 +181,13 @@
 
 (defun magit-gerrit-convert-ref (ref-str from &optional to)
   "Cuts or converts a ref string prefix, e.g.  refs/heads/branch -> refs/publish/branch"
-  (string-match (concat from
-			(rx (group (one-or-more any))))
-		ref-str)
-  (format "%s%s"
-	  (or (and to (format "refs/%s/" to)) "")
-	  (match-string 1 ref-str)))
+  (or (when (string-match (concat from
+			     (rx (group (one-or-more any))))
+			  ref-str)
+	(format "%s%s"
+		(or (and to (format "refs/%s/" to)) "")
+		(match-string 1 ref-str)))
+      ref-str))
 
 (defun magit-gerrit-string-trunc (str maxlen)
   (if (> (length str) maxlen)

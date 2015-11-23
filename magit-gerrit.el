@@ -212,12 +212,10 @@ Succeed even if branch already exist
 	 (score (cdr-safe (assoc 'value approval))))
 
     (magit-insert-section (section approval)
-      (magit-insert (concat
-		     (magit-gerrit-pretty-print-reviewer
-		      approvname approvemail
-		      (when codereview score)
-		      (when verified score))
-		     "\n")))))
+      (insert (magit-gerrit-pretty-print-reviewer approvname approvemail
+						  (and codereview score)
+						  (and verified score))
+	      "\n"))))
 
 (defun magit-gerrit-wash-approvals (approvals)
   (mapc #'magit-gerrit-wash-approval approvals))
@@ -241,14 +239,12 @@ Succeed even if branch already exist
 	(delete-region beg end))
     (when (and num subj owner-name)
       (magit-insert-section (section subj)
-	(magit-insert
-	 (propertize
-	  (magit-gerrit-pretty-print-review num subj owner-name isdraft)
-	  'magit-gerrit-jobj
-	  jobj))
+	(insert (propertize
+		 (magit-gerrit-pretty-print-review num subj owner-name isdraft)
+		 'magit-gerrit-jobj
+		 jobj))
 	(unless (magit-section-hidden (magit-current-section))
-	  (magit-gerrit-wash-approvals approvs)
-	  )
+	  (magit-gerrit-wash-approvals approvs))
 	(add-text-properties beg (point) (list 'magit-gerrit-jobj jobj)))
       t)))
 
@@ -261,7 +257,7 @@ Succeed even if branch already exist
     (magit-insert-section (section title)
       (magit-insert-heading title)
       (magit-git-wash washer (split-string (car args)))
-      (magit-insert "\n"))))
+      (insert "\n"))))
 
 (defun magit-gerrit-remote-update (&optional remote)
   nil)

@@ -92,6 +92,11 @@
 (defvar-local magit-gerrit-use-topics nil
   "Flag that indicates the default option of using a topic when pushing to remote")
 
+(defcustom magit-gerrit-popup-prefix (kbd "R")
+  "Key code to open magit-gerrit popup"
+  :group 'magit-gerrit
+  :type 'key-sequence)
+
 (defun gerrit-command (cmd &rest args)
   (let ((gcmd (concat
 	       "-x -p 29418 "
@@ -687,7 +692,7 @@ Succeed even if branch already exist
 
 (defvar magit-gerrit-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "R") 'magit-gerrit-build-popup)
+    (define-key map magit-gerrit-popup-prefix 'magit-gerrit-build-popup)
     map))
 
 (define-minor-mode magit-gerrit-mode "Gerrit support for Magit"
@@ -741,7 +746,9 @@ and port is the default gerrit ssh port."
 	       (or magit-gerrit-ssh-creds
 		   (magit-gerrit-detect-ssh-creds remote-url))
 	       (string-match magit-gerrit-ssh-creds remote-url))
-     (magit-gerrit-mode t))))
+      ;; update keymap with prefix incase it has changed
+      (define-key magit-gerrit-mode-map magit-gerrit-popup-prefix 'magit-gerrit-build-popup)
+      (magit-gerrit-mode t))))
 
 ;; Hack in dir-local variables that might be set for magit gerrit
 (add-hook 'magit-status-mode-hook #'hack-dir-local-variables-non-file-buffer t)

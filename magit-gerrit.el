@@ -253,7 +253,7 @@ Succeed even if branch already exist
 
 (defun magit-gerrit-section (section title washer &rest args)
   (let ((magit-git-executable (executable-find "ssh"))
-	(magit-git-standard-options nil))
+	(magit-git-global-arguments nil))
     (magit-insert-section (section title)
       (magit-insert-heading title)
       (magit-git-wash washer (split-string (car args)))

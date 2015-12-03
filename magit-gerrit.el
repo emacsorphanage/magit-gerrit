@@ -520,7 +520,7 @@ Succeed even if branch already exist
 
 (defvar magit-gerrit-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map magit-gerrit-popup-prefix 'magit-gerrit-build-popup)
+    (define-key map magit-gerrit-popup-prefix 'magit-gerrit-popup)
     map))
 
 (define-minor-mode magit-gerrit-mode "Gerrit support for Magit"
@@ -575,7 +575,7 @@ and port is the default gerrit ssh port."
 		   (magit-gerrit-detect-ssh-creds remote-url))
 	       (string-match magit-gerrit-ssh-creds remote-url))
       ;; update keymap with prefix incase it has changed
-      (define-key magit-gerrit-mode-map magit-gerrit-popup-prefix 'magit-gerrit-build-popup)
+      (define-key magit-gerrit-mode-map magit-gerrit-popup-prefix 'magit-gerrit-popup)
       (magit-gerrit-mode t))))
 
 ;; Hack in dir-local variables that might be set for magit gerrit

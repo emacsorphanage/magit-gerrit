@@ -390,10 +390,7 @@ Succeed even if branch already exist
 		  (magit-gerrit-get-project)
 		  "--submit"
 		  args)
-  (let* ((branch (or (magit-get-current-branch)
-		     (error "Don't push a detached head.  That's gross")))
-	 (branch-remote (and branch (magit-get "branch" branch "remote"))))
-    (magit-fetch-current branch-remote)))
+  (magit-fetch-from-upstream ""))
 
 (defun magit-gerrit-push-review (status)
   (let* ((branch (or (magit-get-current-branch)

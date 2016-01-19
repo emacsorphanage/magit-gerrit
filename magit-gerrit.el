@@ -92,6 +92,13 @@
 (defvar-local magit-gerrit-use-topics nil
   "Flag that indicates the default option of using a topic when pushing to remote")
 
+(defvar-local magit-gerrit-default-reviewers nil
+  "Default reviewers used to gerrit review")
+
+(defun gerrit-receive-pack-reviewers (reviewers)
+  (if reviewers
+      (format "--receive-pack=git receive-pack --reviewer=%s" reviewers)
+
 (defcustom magit-gerrit-popup-prefix (kbd "R")
   "Key code to open magit-gerrit popup"
   :group 'magit-gerrit
@@ -484,7 +491,9 @@ Succeed even if branch already exist
 	(setq branch-remote magit-gerrit-remote))
 
       (magit-run-git-async "push" "-v" branch-remote
-			   (concat rev ":" branch-pub)))))
+                           (concat rev ":" branch-pub)
+                           (gerrit-receive-pack-reviewers
+                            magit-gerrit-default-reviewers)))))
 
 (defun magit-gerrit-create-review (&rest args)
   (interactive (magit-gerrit-push-review-arguments))

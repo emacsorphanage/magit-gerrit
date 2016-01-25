@@ -465,38 +465,28 @@ Succeed even if branch already exist
 		  args)
   (magit-fetch-from-upstream ""))
 
-(defun magit-gerrit-push-review (status use-pub-branch topic)
+(defun magit-gerrit-push-review (status remote-branch topic)
   (let* ((branch (or (magit-get-current-branch)
-		     (error "Don't push a detached head.  That's gross")))
-	 (commitid (or (when (eq (magit-section-type (magit-current-section))
-				 'commit)
-			 (magit-section-value (magit-current-section)))
-		       (error "Couldn't find a commit at point")))
-	 (rev (magit-rev-parse (or commitid
-				   (error "Select a commit for review"))))
-
-	 (branch-remote (and branch (magit-get "branch" branch "remote"))))
-
+                     (error "Don't push a detached head.  That's gross")))
+         (commitid (or (when (eq (magit-section-type (magit-current-section))
+                                 'commit)
+                         (magit-section-value (magit-current-section)))
+                       (error "Couldn't find a commit at point")))
+         (rev (magit-rev-parse (or commitid
+                                   (error "Select a commit for review"))))
+         (branch-remote (and branch (magit-get "branch" branch "remote")))
+         (branch-merge (if (string= remote-branch "")
+                           (magit-gerrit-query-remote-branch-merge))))
     ;; (message "Args: %s "
     ;;	     (concat rev ":" branch-pub))
+    (when (or (string= branch-remote ".")
+              (string= branch-remote "")
+              (null branch-remote))
+      (setq branch-remote magit-gerrit-remote))
 
-    (let* ((branch-merge (if (string= branch-remote ".")
-			     (magit-gerrit-query-remote-branch-merge)
-			   (and branch (magit-get "branch" branch "merge"))))
-	   (branch-pub (or
-			(and use-pub-branch (format "refs/%s/%s" status use-pub-branch))
-			branch-merge)))
-
-
-      (when (or (string= branch-remote ".")
-		(string= branch-remote "")
-		(null branch-remote))
-	(setq branch-remote magit-gerrit-remote))
-
+    (let* ((branch-pub (format "refs/%s/%s" status branch-merge)))
       (magit-run-git-async "push" "-v" branch-remote
-                           (concat rev ":" branch-pub)
-                           (gerrit-receive-pack-reviewers
-                            magit-gerrit-default-reviewers)))))
+                           (concat rev ":" branch-pub)))))
 
 (defun magit-gerrit-create-review (&rest args)
   (interactive (magit-gerrit-push-review-arguments))

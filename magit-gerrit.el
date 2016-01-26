@@ -476,7 +476,8 @@ Succeed even if branch already exist
                                    (error "Select a commit for review"))))
          (branch-remote (and branch (magit-get "branch" branch "remote")))
          (branch-merge (if (string= remote-branch "")
-                           (magit-gerrit-query-remote-branch-merge))))
+                           (magit-gerrit-query-remote-branch-merge)
+                         remote-branch)))
     ;; (message "Args: %s "
     ;;	     (concat rev ":" branch-pub))
     (when (or (string= branch-remote ".")

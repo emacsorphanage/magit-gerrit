@@ -407,7 +407,8 @@ Succeed even if branch already exist
     ;; (message "Args: %s "
     ;;	     (concat rev ":" branch-pub))
 
-    (let* ((branch-merge (if (string= branch-remote ".")
+    (let* ((branch-merge (if (or (null branch-remote)
+				 (string= branch-remote "."))
 			     (completing-read
 			      "Remote Branch: "
 			      (let ((rbs (magit-list-remote-branch-names)))
@@ -428,7 +429,8 @@ Succeed even if branch already exist
 			 (format "refs/%s%s/%s" status (match-string 1 branch-merge) branch))))
 
 
-      (when (string= branch-remote ".")
+      (when (or (null branch-remote)
+		(string= branch-remote "."))
 	(setq branch-remote magit-gerrit-remote))
 
       (magit-run-git-async "push" "-v" branch-remote

@@ -85,11 +85,22 @@
        (defvar ,var ,val ,docstring)
        (make-variable-buffer-local ',var))))
 
+(defconst magit-gerrit-default-port 29418
+  "Default gerrit port")
+
 (defvar-local magit-gerrit-ssh-creds nil
   "Credentials used to execute gerrit commands via ssh of the form ID@Server")
 
 (defvar-local magit-gerrit-remote "origin"
   "Default remote name to use for gerrit (e.g. \"origin\", \"gerrit\")")
+
+(defvar-local magit-gerrit-port nil
+  "The port number of gerrit on remote host. Default is 29418")
+
+(defcustom magit-gerrit-known-hosts nil
+  "The white-list of gerrit-enabled remote hosts in ereg-pattern."
+  :group 'magit-gerrit
+  :type '(repeat regexp))
 
 (defcustom magit-gerrit-popup-prefix (kbd "R")
   "Key code to open magit-gerrit popup"
@@ -98,7 +109,7 @@
 
 (defun gerrit-command (cmd &rest args)
   (let ((gcmd (concat
-	       "-x -p 29418 "
+	       "-x -p " (number-to-string magit-gerrit-port) " "
 	       (or magit-gerrit-ssh-creds
 		   (error "`magit-gerrit-ssh-creds' must be set!"))
 	       " "
@@ -558,12 +569,29 @@ Succeed even if branch already exist
   "Derive magit-gerrit-ssh-creds from remote-url.
 Assumes remote-url is a gerrit repo if scheme is ssh
 and port is the default gerrit ssh port."
-  (let ((url (url-generic-parse-url remote-url)))
-    (when (and (string= "ssh" (url-type url))
-	       (eq 29418 (url-port url)))
-      (set (make-local-variable 'magit-gerrit-ssh-creds)
-	   (format "%s@%s" (url-user url) (url-host url)))
-      (message "Detected magit-gerrit-ssh-creds=%s" magit-gerrit-ssh-creds))))
+  (let* ((url (url-generic-parse-url remote-url))
+         (type (url-type url))
+         (port (url-port url))
+         (user (url-user url))
+         (host (url-host url))
+         (creds (and host (concat (and user (concat user "@")) host))))
+    (when (and (string= "ssh" type)
+               creds
+               (or (eq port magit-gerrit-default-port)
+                   magit-gerrit-port ; user specified the port
+                   (let (matched) ; or the host is in white-list
+                     (dolist (pattern magit-gerrit-known-hosts)
+                       (when (string-match pattern host)
+                         (setq matched t)))
+                     matched)
+                   (eq 0 (shell-command ; or just try to connect
+                          (concat "ssh -x -p "
+                                  (number-to-string (or magit-gerrit-port port)) " "
+                                  creds " gerrit version")))))
+      (set (make-local-variable 'magit-gerrit-ssh-creds) creds)
+      (set (make-local-variable 'magit-gerrit-port) (or magit-gerrit-port port))
+      (message "Detected magit-gerrit-ssh-creds=%s, magit-gerrit-port=%d"
+               magit-gerrit-ssh-creds magit-gerrit-port))))
 
 (defun magit-gerrit-check-enable ()
   (let ((remote-url (magit-gerrit-get-remote-url)))

@@ -270,6 +270,11 @@ Succeed even if branch already exist
 (defun magit-gerrit-review-at-point ()
   (get-text-property (point) 'magit-gerrit-jobj))
 
+(defsubst magit-gerrit-process-wait ()
+  (while (and magit-this-process
+	      (eq (process-status magit-this-process) 'run))
+    (sleep-for 0.005)))
+
 (defun magit-gerrit-view-patchset-diff ()
   "View the Diff for a Patchset"
   (interactive)
@@ -280,7 +285,7 @@ Succeed even if branch already exist
 	(let* ((magit-proc (magit-fetch magit-gerrit-remote ref)))
 	  (message (format "Waiting a git fetch from %s to complete..."
 			   magit-gerrit-remote))
-	  (magit-process-wait))
+	  (magit-gerrit-process-wait))
 	(message (format "Generating Gerrit Patchset for refs %s dir %s" ref dir))
 	(magit-diff "FETCH_HEAD~1..FETCH_HEAD")))))
 
@@ -297,7 +302,7 @@ Succeed even if branch already exist
 	(let* ((magit-proc (magit-fetch magit-gerrit-remote ref)))
 	  (message (format "Waiting a git fetch from %s to complete..."
 			   magit-gerrit-remote))
-	  (magit-process-wait))
+	  (magit-gerrit-process-wait))
 	(message (format "Checking out refs %s to %s in %s" ref branch dir))
 	(magit-gerrit-create-branch-force branch "FETCH_HEAD")))))
 

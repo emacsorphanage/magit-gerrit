@@ -510,7 +510,7 @@ Succeed even if branch already exist
   :options '((?m "Comment"                      "--message "       magit-gerrit-read-comment)))
 
 ;; Attach Magit Gerrit to Magit's default help popup
-(magit-define-popup-action 'magit-dispatch-popup ?R "Gerrit"
+(magit-define-popup-action 'magit-dispatch-popup (string-to-char magit-gerrit-popup-prefix) "Gerrit"
   'magit-gerrit-popup)
 
 (magit-define-popup magit-gerrit-copy-review-popup

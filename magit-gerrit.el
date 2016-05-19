@@ -95,6 +95,11 @@
 (defvar-local magit-gerrit-default-reviewers nil
   "Default reviewers used to gerrit review")
 
+(defcustom magit-gerrit-ssh-timeout 3
+  "Maximum time (in seconds) to wait for connection to Gerrit"
+  :group 'magit-gerrit
+  :type 'integer)
+
 (defun gerrit-receive-pack-reviewers (reviewers)
   (if reviewers
       (format "--receive-pack=git receive-pack %s"
@@ -110,6 +115,9 @@
 (defun gerrit-command (cmd &rest args)
   (let ((gcmd (concat
                "-x -p 29418 "
+	       "-o ConnectTimeout="
+	       (number-to-string magit-gerrit-ssh-timeout)
+	       " "
                (or magit-gerrit-ssh-creds
                    (error "`magit-gerrit-ssh-creds' must be set!"))
                " "

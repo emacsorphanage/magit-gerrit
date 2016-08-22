@@ -72,9 +72,7 @@
 
 (require 'magit)
 (require 'json)
-
-(eval-when-compile
-  (require 'cl-lib))
+(require 'cl-lib)
 
 ;; Define a defvar-local macro for Emacs < 24.3
 (unless (fboundp 'defvar-local)
@@ -501,17 +499,17 @@ Succeed even if branch already exist
   (interactive (magit-gerrit-push-review-arguments))
 
   (let ((rb (car-safe
-             (delete-if 'null
-                        (mapcar (lambda (k) (and
-                                             (string-match (rx "rb:" (group (zero-or-more any))) k)
-                                             (match-string 1 k)))
-                                args))))
+             (cl-delete-if 'null
+                           (mapcar (lambda (k) (and
+                                                (string-match (rx "rb:" (group (zero-or-more any))) k)
+                                                (match-string 1 k)))
+                                   args))))
         (tp (car-safe
-             (delete-if 'null
-                        (mapcar (lambda (k) (and
-                                             (string-match (rx "tp:" (group (zero-or-more any))) k)
-                                             (match-string 1 k)))
-                                args)))))
+             (cl-delete-if 'null
+                           (mapcar (lambda (k) (and
+                                                (string-match (rx "tp:" (group (zero-or-more any))) k)
+                                                (match-string 1 k)))
+                                   args)))))
 
     (magit-gerrit-push-review 'publish rb tp)))
 
@@ -522,17 +520,17 @@ Succeed even if branch already exist
   (interactive (magit-gerrit-push-review-arguments))
 
   (let ((rb (car-safe
-             (delete-if 'null
-                        (mapcar (lambda (k) (and
-                                             (string-match (rx "rb:" (group (zero-or-more any))) k)
-                                             (match-string 1 k)))
-                                args))))
+             (cl-delete-if 'null
+                           (mapcar (lambda (k) (and
+                                                (string-match (rx "rb:" (group (zero-or-more any))) k)
+                                                (match-string 1 k)))
+                                   args))))
         (tp (car-safe
-             (delete-if 'null
-                        (mapcar (lambda (k) (and
-                                             (string-match (rx "tp:" (group (zero-or-more any))) k)
-                                             (match-string 1 k)))
-                                args)))))
+             (cl-delete-if 'null
+                           (mapcar (lambda (k) (and
+                                                (string-match (rx "tp:" (group (zero-or-more any))) k)
+                                                (match-string 1 k)))
+                                   args)))))
     (magit-gerrit-push-review 'drafts rb tp)))
 
 (defun magit-gerrit-publish-draft ()

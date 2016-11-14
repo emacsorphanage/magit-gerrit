@@ -91,6 +91,9 @@
 (defvar-local magit-gerrit-remote "origin"
   "Default remote name to use for gerrit (e.g. \"origin\", \"gerrit\")")
 
+(defvar-local magit-gerrit-reviewer-list '()
+  "Default reviewers add to review code, use email@addr")
+
 (defcustom magit-gerrit-popup-prefix (kbd "R")
   "Key code to open magit-gerrit popup"
   :group 'magit-gerrit
@@ -348,6 +351,13 @@ Succeed even if branch already exist
 		  "--add" (read-string "Reviewer Name/Email: ")
 		  (cdr-safe (assoc 'id (magit-gerrit-review-at-point)))))
 
+(defun magit-gerrit-add-reviewer-list ()
+  (dolist (reviewer magit-gerrit-reviewer-list)
+    (gerrit-ssh-cmd "set-reviewers"
+		    "--project" (magit-gerrit-get-project)
+		    "--add" reviewer
+		    (cdr-safe (assoc 'id (magit-gerrit-review-at-point))))))
+
 (defun magit-gerrit-popup-args (&optional something)
   (or (magit-gerrit-arguments) (list "")))
 
@@ -500,6 +510,7 @@ Succeed even if branch already exist
 	     (?p "Publish Draft Patchset"                          magit-gerrit-publish-draft)
 	     (?k "Delete Draft"                                    magit-gerrit-delete-draft)
 	     (?A "Add Reviewer"                                    magit-gerrit-add-reviewer)
+	     (?a "Add Default Reviewers"                           magit-gerrit-add-reviewer-list)
 	     (?V "Verify"                                          magit-gerrit-verify-review)
 	     (?C "Code Review"                                     magit-gerrit-code-review)
 	     (?d "View Patchset Diff"                              magit-gerrit-view-patchset-diff)

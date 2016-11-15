@@ -352,11 +352,10 @@ Succeed even if branch already exist
 		  (cdr-safe (assoc 'id (magit-gerrit-review-at-point)))))
 
 (defun magit-gerrit-add-reviewer-list ()
-  (dolist (reviewer magit-gerrit-reviewer-list)
-    (gerrit-ssh-cmd "set-reviewers"
-		    "--project" (magit-gerrit-get-project)
-		    "--add" reviewer
-		    (cdr-safe (assoc 'id (magit-gerrit-review-at-point))))))
+  (apply #'gerrit-ssh-cmd (append (list "set-reviewers")
+				  (list "--project" (magit-gerrit-get-project))
+				  (cl-mapcan (lambda (reviewer) (list "--add" reviewer)) magit-gerrit-reviewer-list)
+				  (cdr-safe (assoc 'id (magit-gerrit-review-at-point))))))
 
 (defun magit-gerrit-popup-args (&optional something)
   (or (magit-gerrit-arguments) (list "")))

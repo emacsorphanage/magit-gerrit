@@ -96,6 +96,14 @@
   :group 'magit-gerrit
   :type 'key-sequence)
 
+;;;###autoload
+(eval-after-load "magit"
+  '(progn
+     (magit-define-popup-action 'magit-dispatch-popup
+       ?R "Gerrit" #'magit-gerrit-popup ?!)
+     (define-key magit-status-mode-map
+       "R" #'magit-gerrit-popup)))
+
 (defun gerrit-command (cmd &rest args)
   (let ((gcmd (concat
 	       "-x -p 29418 "
@@ -508,10 +516,6 @@ Succeed even if branch already exist
 	     (?B "Abandon Review"                                  magit-gerrit-abandon-review)
 	     (?b "Browse Review"                                   magit-gerrit-browse-review))
   :options '((?m "Comment"                      "--message "       magit-gerrit-read-comment)))
-
-;; Attach Magit Gerrit to Magit's default help popup
-(magit-define-popup-action 'magit-dispatch-popup (string-to-char magit-gerrit-popup-prefix) "Gerrit"
-  'magit-gerrit-popup)
 
 (magit-define-popup magit-gerrit-copy-review-popup
   "Popup console for copy review to clipboard."

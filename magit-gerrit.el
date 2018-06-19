@@ -248,7 +248,7 @@ Succeed even if branch already exist
 		 (magit-gerrit-pretty-print-review num subj owner-name isdraft)
 		 'magit-gerrit-jobj
 		 jobj))
-	(unless (magit-section-hidden (magit-current-section))
+	(unless (oref (magit-current-section) hidden)
 	  (magit-gerrit-wash-approvals approvs))
 	(add-text-properties beg (point) (list 'magit-gerrit-jobj jobj)))
       t)))

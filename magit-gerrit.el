@@ -408,9 +408,9 @@ Succeed even if branch already exist
 (defun magit-gerrit-push-review (status)
   (let* ((branch (or (magit-get-current-branch)
 		     (error "Don't push a detached head.  That's gross")))
-	 (commitid (or (when (eq (magit-section-type (magit-current-section))
+	 (commitid (or (when (eq (oref (magit-current-section) type)
 				 'commit)
-			 (magit-section-value (magit-current-section)))
+			 (oref (magit-current-section) type))
 		       (error "Couldn't find a commit at point")))
 	 (rev (magit-rev-parse (or commitid
 				   (error "Select a commit for review"))))
@@ -565,6 +565,7 @@ Succeed even if branch already exist
   (when (called-interactively-p 'any)
     (magit-refresh)))
 
+;;;###autoload
 (defun magit-gerrit-detect-ssh-creds (remote-url)
   "Derive magit-gerrit-ssh-creds from remote-url.
 Assumes remote-url is a gerrit repo if scheme is ssh
@@ -576,12 +577,15 @@ and port is the default gerrit ssh port."
 	   (format "%s@%s" (url-user url) (url-host url)))
       (message "Detected magit-gerrit-ssh-creds=%s" magit-gerrit-ssh-creds))))
 
+;;;###autoload
 (defun magit-gerrit-check-enable ()
   (let ((remote-url (magit-gerrit-get-remote-url)))
     (when (and remote-url
 	       (or magit-gerrit-ssh-creds
 		   (magit-gerrit-detect-ssh-creds remote-url))
-	       (string-match magit-gerrit-ssh-creds remote-url))
+	       (string-match (url-host
+                              (url-generic-parse-url remote-url))
+                              magit-gerrit-ssh-creds))
       ;; update keymap with prefix incase it has changed
       (define-key magit-gerrit-mode-map magit-gerrit-popup-prefix 'magit-gerrit-popup)
       (magit-gerrit-mode t))))
@@ -590,6 +594,7 @@ and port is the default gerrit ssh port."
 (add-hook 'magit-status-mode-hook #'hack-dir-local-variables-non-file-buffer t)
 
 ;; Try to auto enable magit-gerrit in the magit-status buffer
+;;;###autoload
 (add-hook 'magit-status-mode-hook #'magit-gerrit-check-enable t)
 (add-hook 'magit-log-mode-hook #'magit-gerrit-check-enable t)
 

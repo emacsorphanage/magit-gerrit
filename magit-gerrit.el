@@ -256,7 +256,7 @@ Succeed even if branch already exist
 		 (magit-gerrit-pretty-print-review num subj owner-name isdraft)
 		 'magit-gerrit-jobj
 		 jobj))
-	(unless (magit-section-hidden (magit-current-section))
+	(unless (oref (magit-current-section) hidden)
 	  (magit-gerrit-wash-approvals approvs))
 	(add-text-properties beg (point) (list 'magit-gerrit-jobj jobj)))
       t)))
@@ -410,7 +410,7 @@ Succeed even if branch already exist
 		     (error "Don't push a detached head.  That's gross")))
 	 (commitid (or (when (eq (oref (magit-current-section) type)
 				 'commit)
-			 (oref (magit-current-section) type))
+			 (oref (magit-current-section) value))
 		       (error "Couldn't find a commit at point")))
 	 (rev (magit-rev-parse (or commitid
 				   (error "Select a commit for review"))))
@@ -583,8 +583,9 @@ and port is the default gerrit ssh port."
     (when (and remote-url
 	       (or magit-gerrit-ssh-creds
 		   (magit-gerrit-detect-ssh-creds remote-url))
-	       (string-match (url-host
-                              (url-generic-parse-url remote-url))
+	       (string-match (or (url-host
+                                  (url-generic-parse-url remote-url))
+                                 "")
                               magit-gerrit-ssh-creds))
       ;; update keymap with prefix incase it has changed
       (define-key magit-gerrit-mode-map magit-gerrit-popup-prefix 'magit-gerrit-popup)

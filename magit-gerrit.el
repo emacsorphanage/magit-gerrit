@@ -78,13 +78,13 @@
   (require 'cl-lib))
 
 (defvar-local magit-gerrit-ssh-creds nil
-  "Credentials used to execute gerrit commands via ssh of the form ID@Server")
+  "Credentials used to execute gerrit commands via ssh of the form ID@Server.")
 
 (defvar-local magit-gerrit-remote "origin"
-  "Default remote name to use for gerrit (e.g. \"origin\", \"gerrit\")")
+  "Default remote name to use for gerrit (e.g. \"origin\", \"gerrit\").")
 
 (defcustom magit-gerrit-popup-prefix (kbd "R")
-  "Key code to open magit-gerrit popup"
+  "Key code to open magit-gerrit popup."
   :group 'magit-gerrit
   :type 'key-sequence)
 
@@ -259,7 +259,7 @@ Succeed even if branch already exist
     (sleep-for 0.005)))
 
 (defun magit-gerrit-view-patchset-diff ()
-  "View the Diff for a Patchset"
+  "View the Diff for a Patchset."
   (interactive)
   (let ((jobj (magit-gerrit-review-at-point)))
     (when jobj
@@ -275,7 +275,7 @@ Succeed even if branch already exist
 	       (magit-diff-arguments))))))
 
 (defun magit-gerrit-download-patchset ()
-  "Download a Gerrit Review Patchset"
+  "Download a Gerrit Review Patchset."
   (interactive)
   (let ((jobj (magit-gerrit-review-at-point)))
     (when jobj
@@ -311,12 +311,12 @@ Succeed even if branch already exist
           (clipboard-kill-region (point-min) (point-max))))))
 
 (defun magit-gerrit-copy-review-url ()
-  "Copy review url only"
+  "Copy review url only."
   (interactive)
   (magit-gerrit-copy-review nil))
 
 (defun magit-gerrit-copy-review-url-commit-message ()
-  "Copy review url with commit message"
+  "Copy review url with commit message."
   (interactive)
   (magit-gerrit-copy-review t))
 
@@ -335,7 +335,7 @@ Succeed even if branch already exist
 		  (cdr-safe (assoc 'id (magit-gerrit-review-at-point)))))
 
 (defun magit-gerrit-verify-review (args)
-  "Verify a Gerrit Review"
+  "Verify a Gerrit Review."
   (interactive (magit-gerrit-arguments))
   (let ((score (completing-read "Score: "
 				'("-2" "-1" "0" "+1" "+2")
@@ -350,7 +350,7 @@ Succeed even if branch already exist
     (magit-refresh)))
 
 (defun magit-gerrit-code-review (args)
-  "Perform a Gerrit Code Review"
+  "Perform a Gerrit Code Review."
   (interactive (magit-gerrit-arguments))
   (let ((score (completing-read "Score: "
 				'("-2" "-1" "0" "+1" "+2")
@@ -365,7 +365,7 @@ Succeed even if branch already exist
     (magit-refresh)))
 
 (defun magit-gerrit-submit-review (args)
-  "Submit a Gerrit Code Review"
+  "Submit a Gerrit Code Review."
   ;; ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit
   (interactive (magit-gerrit-arguments))
   (gerrit-ssh-cmd "review"
@@ -501,7 +501,8 @@ Succeed even if branch already exist
     (define-key map magit-gerrit-popup-prefix 'magit-gerrit-popup)
     map))
 
-(define-minor-mode magit-gerrit-mode "Gerrit support for Magit"
+(define-minor-mode magit-gerrit-mode
+  "Gerrit support for Magit."
   :lighter " Gerrit" :require 'magit-topgit :keymap 'magit-gerrit-mode-map
   (unless (derived-mode-p 'magit-mode)
     (error "This mode only makes sense with magit"))

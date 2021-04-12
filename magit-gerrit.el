@@ -1,5 +1,5 @@
 ;;; magit-gerrit.el --- Magit plugin for Gerrit Code Review
-;;
+
 ;; Copyright (C) 2013 Brian Fransioli
 ;;
 ;; Author: Brian Fransioli <assem@terranpro.org>
@@ -20,7 +20,7 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 ;;; Commentary:
-;;
+
 ;; Magit plugin to make Gerrit code review easy-to-use from emacs and
 ;; without the need for a browser!
 ;;
@@ -28,25 +28,25 @@
 ;; meant that obtaining the list of reviewers is not possible, only
 ;; the list of approvals (those who have already verified and/or code
 ;; reviewed).
-;;
-;;; To Use:
-;;
+
+;;; Usage:
+
 ;; (require 'magit-gerrit)
 ;; (setq-default magit-gerrit-ssh-creds "myid@gerrithost.org")
-;;
 ;;
 ;; M-x `magit-status'
 ;; h R  <= magit-gerrit uses the R prefix, see help
 ;;
 ;;; Workflow:
-;;
+
 ;; 1) *check out branch => changes => (ma)git commit*
 ;; 2) R P  <= [ger*R*it *P*ush for review]
 ;; 3) R A  <= [ger*R*it *A*dd reviewer] (by email address)
 ;; 4) *wait for verification/code reviews* [approvals shown in status]
 ;; 5) R S  <= [ger*R*it *S*ubmit review]
-;;
+
 ;;; Other Comments:
+
 ;; `magit-gerrit-ssh-creds' is buffer local, so if you work with
 ;; multiple Gerrit's, you can make this a file or directory local
 ;; variable for one particular project.
@@ -67,7 +67,7 @@
 ;;
 ;; $ cd ~/gerrit/prja; git remote -v => ssh://br.fransioli@gerrit.org/.../prja
 ;; ^~~ `magit-gerrit-mode' *WOULD* be enabled here
-;;
+
 ;;; Code:
 
 (require 'magit)

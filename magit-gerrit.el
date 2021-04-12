@@ -170,15 +170,12 @@ Succeed even if branch already exist
 	 (magit-save-repository-buffers)
 	 (magit-run-git "checkout" "-B" branch parent))))
 
-
 (defun magit-gerrit-pretty-print-reviewer (name email crdone vrdone)
   (let* ((wid (1- (window-width)))
 	 (crstr (propertize (if crdone (format "%+2d" (string-to-number crdone)) "  ")
-			    'face '(magit-diff-lines-heading
-				    bold)))
+			    'face '(magit-diff-lines-heading bold)))
 	 (vrstr (propertize (if vrdone (format "%+2d" (string-to-number vrdone)) "  ")
-			    'face '(magit-diff-added-highlight
-				    bold)))
+			    'face '(magit-diff-added-highlight bold)))
 	 (namestr (propertize (or name "") 'face 'magit-refname))
 	 (emailstr (propertize (if email (concat "(" email ")") "")
 			       'face 'change-log-name)))
@@ -190,12 +187,9 @@ Succeed even if branch already exist
 	 (numstr (propertize (format "%-10s" num) 'face 'magit-hash))
 	 (nlen (length numstr))
 	 (authmaxlen (/ wid 4))
-
 	 (author (propertize (magit-gerrit-string-trunc owner-name authmaxlen)
 			     'face 'magit-log-author))
-
 	 (subjmaxlen (- wid (length author) nlen 6))
-
 	 (subjstr (propertize (magit-gerrit-string-trunc subj subjmaxlen)
 			      'face
 			      (if draft
@@ -215,7 +209,6 @@ Succeed even if branch already exist
 	 (verified (string= type "Verified"))
 	 (codereview (string= type "Code-Review"))
 	 (score (cdr-safe (assoc 'value approval))))
-
     (magit-insert-section (section approval)
       (insert (magit-gerrit-pretty-print-reviewer approvname approvemail
 						  (and codereview score)
@@ -343,8 +336,8 @@ Succeed even if branch already exist
 
 (defun magit-gerrit-add-reviewer ()
   (interactive)
-  "ssh -x -p 29418 user@gerrit gerrit set-reviewers --project toplvlroot/prjname --add email@addr"
-
+  ;; ssh -x -p 29418 user@gerrit gerrit set-reviewers \
+  ;;   --project toplvlroot/prjname --add email@addr"
   (gerrit-ssh-cmd "set-reviewers"
 		  "--project" (magit-gerrit-get-project)
 		  "--add" (read-string "Reviewer Name/Email: ")
@@ -356,7 +349,6 @@ Succeed even if branch already exist
 (defun magit-gerrit-verify-review (args)
   "Verify a Gerrit Review"
   (interactive (magit-gerrit-popup-args))
-
   (let ((score (completing-read "Score: "
 				'("-2" "-1" "0" "+1" "+2")
 				nil t
@@ -386,7 +378,7 @@ Succeed even if branch already exist
 
 (defun magit-gerrit-submit-review (args)
   "Submit a Gerrit Code Review"
-  ;; "ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit "
+  ;; ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit
   (interactive (magit-gerrit-popup-args))
   (gerrit-ssh-cmd "review"
 		  (cdr-safe (assoc
@@ -408,12 +400,7 @@ Succeed even if branch already exist
 		       (error "Couldn't find a commit at point")))
 	 (rev (magit-rev-parse (or commitid
 				   (error "Select a commit for review"))))
-
 	 (branch-remote (and branch (magit-get "branch" branch "remote"))))
-
-    ;; (message "Args: %s "
-    ;;	     (concat rev ":" branch-pub))
-
     (let* ((branch-merge (if (or (null branch-remote)
 				 (string= branch-remote "."))
 			     (completing-read
@@ -421,25 +408,28 @@ Succeed even if branch already exist
 			      (let ((rbs (magit-list-remote-branch-names)))
 				(mapcar
 				 #'(lambda (rb)
-				     (and (string-match (rx bos
-							    (one-or-more (not (any "/")))
-							    "/"
-							    (group (one-or-more any))
-							    eos)
-							rb)
-					  (concat "refs/heads/" (match-string 1 rb))))
+				     (and (string-match
+					   (rx bos
+					       (one-or-more (not (any "/")))
+					       "/"
+					       (group (one-or-more any))
+					       eos)
+					   rb)
+					  (concat "refs/heads/"
+						  (match-string 1 rb))))
 				 rbs)))
 			   (and branch (magit-get "branch" branch "merge"))))
 	   (branch-pub (progn
-			 (string-match (rx "refs/heads" (group (one-or-more any)))
-				       branch-merge)
-			 (format "refs/%s%s/%s" status (match-string 1 branch-merge) branch))))
-
-
+			 (string-match
+			  (rx "refs/heads" (group (one-or-more any)))
+			  branch-merge)
+			 (format "refs/%s%s/%s"
+				 status
+				 (match-string 1 branch-merge)
+				 branch))))
       (when (or (null branch-remote)
 		(string= branch-remote "."))
 	(setq branch-remote magit-gerrit-remote))
-
       (magit-run-git-async "push" "-v" branch-remote
 			   (concat rev ":" branch-pub)))))
 
@@ -546,7 +536,6 @@ Succeed even if branch already exist
 	      'magit-gerrit-remote-update nil t)
     (add-hook 'magit-push-command-hook
 	      'magit-gerrit-push nil t))
-
    (t
     (remove-hook 'magit-after-insert-stashes-hook
 		 'magit-insert-gerrit-reviews t)

@@ -4,7 +4,7 @@
 ;;
 ;; Author: Brian Fransioli <assem@terranpro.org>
 ;; URL: https://github.com/terranpro/magit-gerrit
-;; Package-Requires: ((magit "2.3.1") (transient "0.3.0"))
+;; Package-Requires: ((magit "2.90.1") (transient "0.3.0"))
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -240,7 +240,7 @@ Succeed even if branch already exist
 		 (magit-gerrit-pretty-print-review num subj owner-name isdraft)
 		 'magit-gerrit-jobj
 		 jobj))
-	(unless (magit-section-hidden (magit-current-section))
+	(unless (oref (magit-current-section) hidden)
 	  (magit-gerrit-wash-approvals approvs))
 	(add-text-properties beg (point) (list 'magit-gerrit-jobj jobj)))
       t)))
@@ -274,12 +274,14 @@ Succeed even if branch already exist
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
 	    (dir default-directory))
-	(let* ((magit-proc (magit-fetch magit-gerrit-remote ref)))
+	(let* ((magit-proc (magit-git-fetch magit-gerrit-remote ref)))
 	  (message (format "Waiting a git fetch from %s to complete..."
 			   magit-gerrit-remote))
 	  (magit-gerrit-process-wait))
 	(message (format "Generating Gerrit Patchset for refs %s dir %s" ref dir))
-	(magit-diff "FETCH_HEAD~1..FETCH_HEAD")))))
+	(apply #'magit-diff-setup-buffer
+	       "FETCH_HEAD~1..FETCH_HEAD" nil
+	       (magit-diff-arguments))))))
 
 (defun magit-gerrit-download-patchset ()
   "Download a Gerrit Review Patchset"
@@ -291,7 +293,7 @@ Succeed even if branch already exist
 	    (branch (format "review/%s/%s"
 			    (cdr (assoc 'username (assoc 'owner jobj)))
 			    (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
-	(let* ((magit-proc (magit-fetch magit-gerrit-remote ref)))
+	(let* ((magit-proc (magit-git-fetch magit-gerrit-remote ref)))
 	  (message (format "Waiting a git fetch from %s to complete..."
 			   magit-gerrit-remote))
 	  (magit-gerrit-process-wait))
@@ -385,14 +387,13 @@ Succeed even if branch already exist
 		  (magit-gerrit-get-project)
 		  "--submit"
 		  args)
-  (magit-fetch-from-upstream ""))
+  (magit-git-fetch (magit-get-current-remote t)
+                   (magit-fetch-arguments)))
 
 (defun magit-gerrit-push-review (status)
   (let* ((branch (or (magit-get-current-branch)
 		     (error "Don't push a detached head.  That's gross")))
-	 (commitid (or (when (eq (magit-section-type (magit-current-section))
-				 'commit)
-			 (magit-section-value (magit-current-section)))
+	 (commitid (or (magit-section-value-if 'commit)
 		       (error "Couldn't find a commit at point")))
 	 (rev (magit-rev-parse (or commitid
 				   (error "Select a commit for review"))))

@@ -1,4 +1,4 @@
-;;; magit-gerrit.el --- Magit plugin for Gerrit Code Review
+;;; magit-gerrit.el --- Magit plugin for Gerrit Code Review  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2013 Brian Fransioli
 ;;
@@ -170,8 +170,7 @@ Succeed even if branch already exist
 	 (magit-run-git "checkout" "-B" branch parent))))
 
 (defun magit-gerrit-pretty-print-reviewer (name email crdone vrdone)
-  (let* ((wid (1- (window-width)))
-	 (crstr (propertize (if crdone (format "%+2d" (string-to-number crdone)) "  ")
+  (let* ((crstr (propertize (if crdone (format "%+2d" (string-to-number crdone)) "  ")
 			    'face '(magit-diff-lines-heading bold)))
 	 (vrstr (propertize (if vrdone (format "%+2d" (string-to-number vrdone)) "  ")
 			    'face '(magit-diff-added-highlight bold)))
@@ -225,7 +224,6 @@ Succeed even if branch already exist
 	 (subj (cdr-safe (assoc 'subject jobj)))
 	 (owner (cdr-safe (assoc 'owner jobj)))
 	 (owner-name (cdr-safe (assoc 'name owner)))
-	 (owner-email (cdr-safe (assoc 'email owner)))
 	 (patchsets (cdr-safe (assoc 'currentPatchSet jobj)))
 	 ;; compare w/t since when false the value is => :json-false
 	 (isdraft (eq (cdr-safe (assoc 'isDraft patchsets)) t))
@@ -245,18 +243,18 @@ Succeed even if branch already exist
 	(add-text-properties beg (point) (list 'magit-gerrit-jobj jobj)))
       t)))
 
-(defun magit-gerrit-wash-reviews (&rest args)
+(defun magit-gerrit-wash-reviews (&rest _args)
   (magit-wash-sequence #'magit-gerrit-wash-review))
 
-(defun magit-gerrit-section (section title washer &rest args)
+(defun magit-gerrit-section (type title washer &rest args)
   (let ((magit-git-executable "ssh")
 	(magit-git-global-arguments nil))
-    (magit-insert-section (section title)
+    (magit-insert-section ((eval type) title)
       (magit-insert-heading title)
       (magit-git-wash washer (split-string (car args)))
       (insert "\n"))))
 
-(defun magit-gerrit-remote-update (&optional remote)
+(defun magit-gerrit-remote-update (&optional _remote)
   nil)
 
 (defun magit-gerrit-review-at-point ()
@@ -274,10 +272,10 @@ Succeed even if branch already exist
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
 	    (dir default-directory))
-	(let* ((magit-proc (magit-git-fetch magit-gerrit-remote ref)))
-	  (message (format "Waiting a git fetch from %s to complete..."
-			   magit-gerrit-remote))
-	  (magit-gerrit-process-wait))
+	(magit-git-fetch magit-gerrit-remote ref)
+	(message (format "Waiting a git fetch from %s to complete..."
+			 magit-gerrit-remote))
+	(magit-gerrit-process-wait)
 	(message (format "Generating Gerrit Patchset for refs %s dir %s" ref dir))
 	(apply #'magit-diff-setup-buffer
 	       "FETCH_HEAD~1..FETCH_HEAD" nil
@@ -293,10 +291,9 @@ Succeed even if branch already exist
 	    (branch (format "review/%s/%s"
 			    (cdr (assoc 'username (assoc 'owner jobj)))
 			    (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
-	(let* ((magit-proc (magit-git-fetch magit-gerrit-remote ref)))
-	  (message (format "Waiting a git fetch from %s to complete..."
-			   magit-gerrit-remote))
-	  (magit-gerrit-process-wait))
+	(message (format "Waiting a git fetch from %s to complete..."
+			 magit-gerrit-remote))
+	(magit-gerrit-process-wait)
 	(message (format "Checking out refs %s to %s in %s" ref branch dir))
 	(magit-gerrit-create-branch-force branch "FETCH_HEAD")))))
 
@@ -441,7 +438,6 @@ Succeed even if branch already exist
 (defun magit-gerrit-publish-draft ()
   (interactive)
   (let ((prj (magit-gerrit-get-project))
-	(id (cdr-safe (assoc 'id (magit-gerrit-review-at-point))))
 	(rev (cdr-safe (assoc
 			'revision
 			(cdr-safe (assoc 'currentPatchSet
@@ -452,7 +448,6 @@ Succeed even if branch already exist
 (defun magit-gerrit-delete-draft ()
   (interactive)
   (let ((prj (magit-gerrit-get-project))
-	(id (cdr-safe (assoc 'id (magit-gerrit-review-at-point))))
 	(rev (cdr-safe (assoc
 			'revision
 			(cdr-safe (assoc 'currentPatchSet
@@ -463,20 +458,16 @@ Succeed even if branch already exist
 (defun magit-gerrit-abandon-review ()
   (interactive)
   (let ((prj (magit-gerrit-get-project))
-	(id (cdr-safe (assoc 'id (magit-gerrit-review-at-point))))
 	(rev (cdr-safe (assoc
 			'revision
 			(cdr-safe (assoc 'currentPatchSet
 					 (magit-gerrit-review-at-point)))))))
-    ;; (message "Prj: %s Rev: %s Id: %s" prj rev id)
     (gerrit-review-abandon prj rev)
     (magit-refresh)))
 
-(defun magit-gerrit-read-comment (&rest args)
+(defun magit-gerrit-read-comment (&rest _args)
   (format "\'\"%s\"\'"
 	  (read-from-minibuffer "Message: ")))
-
-(defun magit-gerrit-create-branch (branch parent))
 
 (transient-define-prefix magit-gerrit-popup ()
   "Popup console for magit gerrit commands."
@@ -530,9 +521,6 @@ Succeed even if branch already exist
     (magit-add-section-hook 'magit-status-sections-hook
 			    'magit-insert-gerrit-reviews
 			    'magit-insert-stashes t t)
-    (add-hook 'magit-create-branch-command-hook
-	      'magit-gerrit-create-branch nil t)
-    ;;(add-hook 'magit-pull-command-hook 'magit-gerrit-pull nil t)
     (add-hook 'magit-remote-update-command-hook
 	      'magit-gerrit-remote-update nil t)
     (add-hook 'magit-push-command-hook
@@ -540,9 +528,6 @@ Succeed even if branch already exist
    (t
     (remove-hook 'magit-after-insert-stashes-hook
 		 'magit-insert-gerrit-reviews t)
-    (remove-hook 'magit-create-branch-command-hook
-		 'magit-gerrit-create-branch t)
-    ;;(remove-hook 'magit-pull-command-hook 'magit-gerrit-pull t)
     (remove-hook 'magit-remote-update-command-hook
 		 'magit-gerrit-remote-update t)
     (remove-hook 'magit-push-command-hook

@@ -4,7 +4,7 @@
 ;;
 ;; Author: Brian Fransioli <assem@terranpro.org>
 ;; URL: https://github.com/terranpro/magit-gerrit
-;; Package-Requires: ((magit "2.3.1"))
+;; Package-Requires: ((magit "2.3.1") (transient "0.3.0"))
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -71,8 +71,7 @@
 ;;; Code:
 
 (require 'magit)
-(if (locate-library "magit-popup")
-    (require 'magit-popup))
+(require 'transient)
 (require 'json)
 
 (eval-when-compile
@@ -343,12 +342,9 @@ Succeed even if branch already exist
 		  "--add" (read-string "Reviewer Name/Email: ")
 		  (cdr-safe (assoc 'id (magit-gerrit-review-at-point)))))
 
-(defun magit-gerrit-popup-args (&optional something)
-  (or (magit-gerrit-arguments) (list "")))
-
 (defun magit-gerrit-verify-review (args)
   "Verify a Gerrit Review"
-  (interactive (magit-gerrit-popup-args))
+  (interactive (magit-gerrit-arguments))
   (let ((score (completing-read "Score: "
 				'("-2" "-1" "0" "+1" "+2")
 				nil t
@@ -363,7 +359,7 @@ Succeed even if branch already exist
 
 (defun magit-gerrit-code-review (args)
   "Perform a Gerrit Code Review"
-  (interactive (magit-gerrit-popup-args))
+  (interactive (magit-gerrit-arguments))
   (let ((score (completing-read "Score: "
 				'("-2" "-1" "0" "+1" "+2")
 				nil t
@@ -379,7 +375,7 @@ Succeed even if branch already exist
 (defun magit-gerrit-submit-review (args)
   "Submit a Gerrit Code Review"
   ;; ssh -x -p 29418 user@gerrit gerrit review REVISION  -- --project PRJ --submit
-  (interactive (magit-gerrit-popup-args))
+  (interactive (magit-gerrit-arguments))
   (gerrit-ssh-cmd "review"
 		  (cdr-safe (assoc
 			     'revision
@@ -481,35 +477,39 @@ Succeed even if branch already exist
 
 (defun magit-gerrit-create-branch (branch parent))
 
-(magit-define-popup magit-gerrit-popup
+(transient-define-prefix magit-gerrit-popup ()
   "Popup console for magit gerrit commands."
-  'magit-gerrit
-  :actions '((?P "Push Commit For Review"                          magit-gerrit-create-review)
-	     (?W "Push Commit For Draft Review"                    magit-gerrit-create-draft)
-	     (?p "Publish Draft Patchset"                          magit-gerrit-publish-draft)
-	     (?k "Delete Draft"                                    magit-gerrit-delete-draft)
-	     (?A "Add Reviewer"                                    magit-gerrit-add-reviewer)
-	     (?V "Verify"                                          magit-gerrit-verify-review)
-	     (?C "Code Review"                                     magit-gerrit-code-review)
-	     (?d "View Patchset Diff"                              magit-gerrit-view-patchset-diff)
-	     (?D "Download Patchset"                               magit-gerrit-download-patchset)
-	     (?S "Submit Review"                                   magit-gerrit-submit-review)
-	     (?B "Abandon Review"                                  magit-gerrit-abandon-review)
-	     (?b "Browse Review"                                   magit-gerrit-browse-review))
-  :options '((?m "Comment"                      "--message "       magit-gerrit-read-comment)))
+  ["Options"
+   ("-m" "Comment" "--message "
+    :class transient-option
+    :reader magit-gerrit-read-comment)]
+  ["Actions"
+   ("P" "Push Commit For Review"       magit-gerrit-create-review)
+   ("W" "Push Commit For Draft Review" magit-gerrit-create-draft)
+   ("p" "Publish Draft Patchset"       magit-gerrit-publish-draft)
+   ("k" "Delete Draft"                 magit-gerrit-delete-draft)
+   ("A" "Add Reviewer"                 magit-gerrit-add-reviewer)
+   ("V" "Verify"                       magit-gerrit-verify-review)
+   ("c" "Copy Review"                  magit-gerrit-copy-review-popup)
+   ("C" "Code Review"                  magit-gerrit-code-review)
+   ("d" "View Patchset Diff"           magit-gerrit-view-patchset-diff)
+   ("D" "Download Patchset"            magit-gerrit-download-patchset)
+   ("S" "Submit Review"                magit-gerrit-submit-review)
+   ("B" "Abandon Review"               magit-gerrit-abandon-review)
+   ("b" "Browse Review"                magit-gerrit-browse-review)])
 
-;; Attach Magit Gerrit to Magit's default help popup
-(magit-define-popup-action 'magit-dispatch-popup (string-to-char magit-gerrit-popup-prefix) "Gerrit"
-  'magit-gerrit-popup)
+(defun magit-gerrit-arguments ()
+  (or (transient-args 'magit-gerrit-popup)
+      (list "")))
 
-(magit-define-popup magit-gerrit-copy-review-popup
+(transient-append-suffix 'magit-dispatch "%"
+  (list magit-gerrit-popup-prefix "Gerrit" 'magit-gerrit-popup))
+
+(transient-define-prefix magit-gerrit-copy-review-popup
   "Popup console for copy review to clipboard."
-  'magit-gerrit
-  :actions '((?C "url and commit message" magit-gerrit-copy-review-url-commit-message)
-             (?c "url only" magit-gerrit-copy-review-url)))
-
-(magit-define-popup-action 'magit-gerrit-popup ?c "Copy Review"
-  'magit-gerrit-copy-review-popup)
+  ["Copy review"
+   ("C" "url and commit message" magit-gerrit-copy-review-url-commit-message)
+   ("c" "url only"               magit-gerrit-copy-review-url)])
 
 (defvar magit-gerrit-mode-map
   (let ((map (make-sparse-keymap)))

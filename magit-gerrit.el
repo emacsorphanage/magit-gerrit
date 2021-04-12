@@ -130,15 +130,15 @@
 
 (defun gerrit-review-submit (prj rev &optional msg)
   (gerrit-ssh-cmd "review" "--project" prj "--submit"
-		  (if msg msg "") rev))
+		  (or msg "") rev))
 
 (defun gerrit-code-review (prj rev score &optional msg)
   (gerrit-ssh-cmd "review" "--project" prj "--code-review" score
-		  (if msg msg "") rev))
+		  (or msg "") rev))
 
 (defun gerrit-review-verify (prj rev score &optional msg)
   (gerrit-ssh-cmd "review" "--project" prj "--verified" score
-		  (if msg msg "") rev))
+		  (or msg "") rev))
 
 (defun magit-gerrit-get-remote-url ()
   (magit-git-string "ls-remote" "--get-url" magit-gerrit-remote))
@@ -149,9 +149,9 @@
 		   (group (one-or-more (not (any "."))))))
 	 (str (or (magit-gerrit-get-remote-url) ""))
 	 (sstr (car (last (split-string str "//")))))
-    (when (string-match regx sstr)
-      (concat (match-string 1 sstr)
-	      (match-string 2 sstr)))))
+    (and (string-match regx sstr)
+	 (concat (match-string 1 sstr)
+		 (match-string 2 sstr)))))
 
 (defun magit-gerrit-string-trunc (str maxlen)
   (if (> (length str) maxlen)
@@ -240,8 +240,8 @@ Succeed even if branch already exist
 	 (approvs (cdr-safe (if (listp patchsets)
 				(assoc 'approvals patchsets)
 			      (assoc 'approvals (aref patchsets 0))))))
-    (if (and beg end)
-	(delete-region beg end))
+    (when (and beg end)
+      (delete-region beg end))
     (when (and num subj owner-name)
       (magit-insert-section (section subj)
 	(insert (propertize
@@ -320,8 +320,10 @@ Succeed even if branch already exist
 	(with-temp-buffer
           (insert
            (concat (cdr (assoc 'url jobj))
-                   (if with-commit-message
-                       (concat " " (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t))))))
+                   (and with-commit-message
+			(concat " " (car (split-string
+					  (cdr (assoc 'commitMessage jobj))
+					  "\n" t))))))
           (clipboard-kill-region (point-min) (point-max))))))
 
 (defun magit-gerrit-copy-review-url ()
@@ -526,12 +528,12 @@ Succeed even if branch already exist
 
 (define-minor-mode magit-gerrit-mode "Gerrit support for Magit"
   :lighter " Gerrit" :require 'magit-topgit :keymap 'magit-gerrit-mode-map
-  (or (derived-mode-p 'magit-mode)
-      (error "This mode only makes sense with magit"))
-  (or magit-gerrit-ssh-creds
-      (error "You *must* set `magit-gerrit-ssh-creds' to enable magit-gerrit-mode"))
-  (or (magit-gerrit-get-remote-url)
-      (error "You *must* set `magit-gerrit-remote' to a valid Gerrit remote"))
+  (unless (derived-mode-p 'magit-mode)
+    (error "This mode only makes sense with magit"))
+  (unless magit-gerrit-ssh-creds
+    (error "You *must* set `magit-gerrit-ssh-creds' to enable magit-gerrit-mode"))
+  (unless (magit-gerrit-get-remote-url)
+    (error "You *must* set `magit-gerrit-remote' to a valid Gerrit remote"))
   (cond
    (magit-gerrit-mode
     (magit-add-section-hook 'magit-status-sections-hook

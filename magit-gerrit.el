@@ -144,14 +144,14 @@
   (magit-git-string "ls-remote" "--get-url" magit-gerrit-remote))
 
 (defun magit-gerrit-get-project ()
- (let* ((regx (rx (zero-or-one ?:) (zero-or-more (any digit)) ?/
-		  (group (not (any "/")))
-		  (group (one-or-more (not (any "."))))))
-	(str (or (magit-gerrit-get-remote-url) ""))
-	(sstr (car (last (split-string str "//")))))
-   (when (string-match regx sstr)
-     (concat (match-string 1 sstr)
-	     (match-string 2 sstr)))))
+  (let* ((regx (rx (zero-or-one ?:) (zero-or-more (any digit)) ?/
+		   (group (not (any "/")))
+		   (group (one-or-more (not (any "."))))))
+	 (str (or (magit-gerrit-get-remote-url) ""))
+	 (sstr (car (last (split-string str "//")))))
+    (when (string-match regx sstr)
+      (concat (match-string 1 sstr)
+	      (match-string 2 sstr)))))
 
 (defun magit-gerrit-string-trunc (str maxlen)
   (if (> (length str) maxlen)
@@ -317,12 +317,12 @@ Succeed even if branch already exist
   "Copy review url and commit message."
   (let ((jobj (magit-gerrit-review-at-point)))
     (if jobj
-      (with-temp-buffer
-        (insert
-         (concat (cdr (assoc 'url jobj))
-                 (if with-commit-message
-                     (concat " " (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t))))))
-        (clipboard-kill-region (point-min) (point-max))))))
+	(with-temp-buffer
+          (insert
+           (concat (cdr (assoc 'url jobj))
+                   (if with-commit-message
+                       (concat " " (car (split-string (cdr (assoc 'commitMessage jobj)) "\n" t))))))
+          (clipboard-kill-region (point-min) (point-max))))))
 
 (defun magit-gerrit-copy-review-url ()
   "Copy review url only"
@@ -356,13 +356,13 @@ Succeed even if branch already exist
   (interactive (magit-gerrit-popup-args))
 
   (let ((score (completing-read "Score: "
-				    '("-2" "-1" "0" "+1" "+2")
-				    nil t
-				    "+1"))
+				'("-2" "-1" "0" "+1" "+2")
+				nil t
+				"+1"))
 	(rev (cdr-safe (assoc
-		      'revision
-		      (cdr-safe (assoc 'currentPatchSet
-				       (magit-gerrit-review-at-point))))))
+			'revision
+			(cdr-safe (assoc 'currentPatchSet
+					 (magit-gerrit-review-at-point))))))
 	(prj (magit-gerrit-get-project)))
     (gerrit-review-verify prj rev score args)
     (magit-refresh)))
@@ -371,13 +371,13 @@ Succeed even if branch already exist
   "Perform a Gerrit Code Review"
   (interactive (magit-gerrit-popup-args))
   (let ((score (completing-read "Score: "
-				    '("-2" "-1" "0" "+1" "+2")
-				    nil t
-				    "+1"))
+				'("-2" "-1" "0" "+1" "+2")
+				nil t
+				"+1"))
 	(rev (cdr-safe (assoc
-		      'revision
-		      (cdr-safe (assoc 'currentPatchSet
-				       (magit-gerrit-review-at-point))))))
+			'revision
+			(cdr-safe (assoc 'currentPatchSet
+					 (magit-gerrit-review-at-point))))))
 	(prj (magit-gerrit-get-project)))
     (gerrit-code-review prj rev score args)
     (magit-refresh)))
@@ -452,8 +452,7 @@ Succeed even if branch already exist
 (defun magit-gerrit-publish-draft ()
   (interactive)
   (let ((prj (magit-gerrit-get-project))
-	(id (cdr-safe (assoc 'id
-		     (magit-gerrit-review-at-point))))
+	(id (cdr-safe (assoc 'id (magit-gerrit-review-at-point))))
 	(rev (cdr-safe (assoc
 			'revision
 			(cdr-safe (assoc 'currentPatchSet
@@ -464,8 +463,7 @@ Succeed even if branch already exist
 (defun magit-gerrit-delete-draft ()
   (interactive)
   (let ((prj (magit-gerrit-get-project))
-	(id (cdr-safe (assoc 'id
-		     (magit-gerrit-review-at-point))))
+	(id (cdr-safe (assoc 'id (magit-gerrit-review-at-point))))
 	(rev (cdr-safe (assoc
 			'revision
 			(cdr-safe (assoc 'currentPatchSet
@@ -476,8 +474,7 @@ Succeed even if branch already exist
 (defun magit-gerrit-abandon-review ()
   (interactive)
   (let ((prj (magit-gerrit-get-project))
-	(id (cdr-safe (assoc 'id
-		     (magit-gerrit-review-at-point))))
+	(id (cdr-safe (assoc 'id (magit-gerrit-review-at-point))))
 	(rev (cdr-safe (assoc
 			'revision
 			(cdr-safe (assoc 'currentPatchSet
@@ -542,7 +539,7 @@ Succeed even if branch already exist
 			    'magit-insert-stashes t t)
     (add-hook 'magit-create-branch-command-hook
 	      'magit-gerrit-create-branch nil t)
-    ;(add-hook 'magit-pull-command-hook 'magit-gerrit-pull nil t)
+    ;;(add-hook 'magit-pull-command-hook 'magit-gerrit-pull nil t)
     (add-hook 'magit-remote-update-command-hook
 	      'magit-gerrit-remote-update nil t)
     (add-hook 'magit-push-command-hook
@@ -553,7 +550,7 @@ Succeed even if branch already exist
 		 'magit-insert-gerrit-reviews t)
     (remove-hook 'magit-create-branch-command-hook
 		 'magit-gerrit-create-branch t)
-    ;(remove-hook 'magit-pull-command-hook 'magit-gerrit-pull t)
+    ;;(remove-hook 'magit-pull-command-hook 'magit-gerrit-pull t)
     (remove-hook 'magit-remote-update-command-hook
 		 'magit-gerrit-remote-update t)
     (remove-hook 'magit-push-command-hook

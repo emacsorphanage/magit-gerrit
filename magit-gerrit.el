@@ -110,8 +110,6 @@
 		  (concat "project:" prj)
 		  (concat "status:" (or status "open"))))
 
-(defun gerrit-review ())
-
 (defun gerrit-ssh-cmd (cmd &rest args)
   (apply #'call-process
 	 "ssh" nil nil nil

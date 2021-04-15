@@ -172,6 +172,26 @@
       (concat (match-string 1 sstr)
               (match-string 2 sstr)))))
 
+(defun magit-gerrit-list-remote-branch-names ()
+  (let ((rbs
+         (mapcar
+          #'(lambda (rb)
+              (and (string-match (rx bos
+                                     (one-or-more (not (any "/")))
+                                     "/"
+                                     (group (one-or-more any))
+                                     eos)
+                                 rb)
+                   (concat ;;"refs/publish/"
+                    (match-string 1 rb)
+                    )))
+          (magit-list-remote-branch-names)))
+        (clb (magit-get-current-branch)))
+    ;; move current local branch first
+    (if (seq-contains rbs clb)
+        (cons clb (remove clb rbs))
+      rbs)))
+
 (defun magit-gerrit-query (prompt cands)
   (let ((cmp-read (if (functionp 'ido-completing-read-haha)
                       #'ido-completing-read
@@ -188,19 +208,7 @@
 
   (magit-gerrit-query
    "Remote Branch: "
-   (let ((rbs (magit-list-remote-branch-names)))
-     (mapcar
-      #'(lambda (rb)
-          (and (string-match (rx bos
-                                 (one-or-more (not (any "/")))
-                                 "/"
-                                 (group (one-or-more any))
-                                 eos)
-                             rb)
-               (concat ;;"refs/publish/"
-                (match-string 1 rb)
-                )))
-      rbs))))
+   (magit-gerrit-list-remote-branch-names)))
 
 (defun magit-gerrit-convert-ref (ref-str from &optional to)
   "Cuts or converts a ref string prefix, e.g.  refs/heads/branch -> refs/publish/branch"

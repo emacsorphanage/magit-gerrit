@@ -83,6 +83,24 @@
 (defvar-local magit-gerrit-remote "origin"
   "Default remote name to use for gerrit (e.g. \"origin\", \"gerrit\").")
 
+(defvar-local magit-gerrit-push-format "refs/%s%s/%s"
+  "The format string used for the branch to push to when creating a review.
+
+By default, this is set to \"refs/%s%s/%s\" but some
+installations require \"refs/%s%s%%topic=%s\".
+
+There are 3 elements to this string formatting:
+
+  * First: The base reference to build the code review.
+    Set by `magit-gerrit-push-to'.
+  * Second: Target branch that the code review will be pushed to.
+  * Third: The branch currently being pushed to.")
+
+(defvar-local magit-gerrit-push-to "publish"
+  "The branch used to push a review to.
+Used as the first element in `magit-gerrit-push-format'.
+Typical values would be \"publish\" or \"for\".")
+
 (defcustom magit-gerrit-popup-prefix (kbd "R")
   "Key code to open magit-gerrit popup."
   :group 'magit-gerrit
@@ -408,7 +426,7 @@ Succeed even if branch already exist
 			 (string-match
 			  (rx "refs/heads" (group (one-or-more any)))
 			  branch-merge)
-			 (format "refs/%s%s/%s"
+			 (format magit-gerrit-push-format
 				 status
 				 (match-string 1 branch-merge)
 				 branch))))
@@ -420,7 +438,7 @@ Succeed even if branch already exist
 
 (defun magit-gerrit-create-review ()
   (interactive)
-  (magit-gerrit-push-review 'publish))
+  (magit-gerrit-push-review magit-gerrit-push-to))
 
 (defun magit-gerrit-create-draft ()
   (interactive)

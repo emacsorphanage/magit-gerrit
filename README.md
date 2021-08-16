@@ -40,7 +40,7 @@ Workflow
 Magit Gerrit Configuration
 ============
 
-For simple setups, it should be enough to set the default value for 
+For simple setups, it should be enough to set the default value for
 `magit-gerrit-ssh-creds` and `magit-gerrit-remote` as shown above.
 
 For per project configurations, consider using buffer local or directory local

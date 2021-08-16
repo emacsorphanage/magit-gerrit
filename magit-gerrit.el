@@ -300,13 +300,13 @@ Succeed even if branch already exist
   (let ((jobj (magit-gerrit-review-at-point)))
     (if jobj
 	(with-temp-buffer
-          (insert
-           (concat (cdr (assoc 'url jobj))
-                   (and with-commit-message
+	  (insert
+	   (concat (cdr (assoc 'url jobj))
+		   (and with-commit-message
 			(concat " " (car (split-string
 					  (cdr (assoc 'commitMessage jobj))
 					  "\n" t))))))
-          (clipboard-kill-region (point-min) (point-max))))))
+	  (clipboard-kill-region (point-min) (point-max))))))
 
 (defun magit-gerrit-copy-review-url ()
   "Copy review url only."
@@ -376,7 +376,7 @@ Succeed even if branch already exist
    "--submit"
    args)
   (magit-git-fetch (magit-get-current-remote t)
-                   (magit-fetch-arguments)))
+		   (magit-fetch-arguments)))
 
 (defun magit-gerrit-push-review (status)
   (let* ((branch (or (magit-get-current-branch)
@@ -555,6 +555,9 @@ and port is the default gerrit ssh port."
 (add-hook 'magit-status-mode-hook #'magit-gerrit-check-enable t)
 (add-hook 'magit-log-mode-hook #'magit-gerrit-check-enable t)
 
+;;; _
 (provide 'magit-gerrit)
-
+;; Local Variables:
+;; indent-tabs-mode: t
+;; End:
 ;;; magit-gerrit.el ends here

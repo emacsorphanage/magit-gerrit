@@ -1,3 +1,5 @@
+**This package isn't being maintained anymore.**
+
 magit-gerrit
 ============
 

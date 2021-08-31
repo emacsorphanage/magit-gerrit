@@ -3,7 +3,7 @@
 ;; Copyright (C) 2013 Brian Fransioli
 ;;
 ;; Author: Brian Fransioli <assem@terranpro.org>
-;; URL: https://github.com/terranpro/magit-gerrit
+;; URL: https://github.com/emacsorphanage/magit-gerrit
 ;; Package-Requires: ((emacs "25.1") (magit "2.90.1") (transient "0.3.0"))
 ;;
 ;; This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 
 ;;; Commentary:
 
-;; Magit plugin to make Gerrit code review easy-to-use from emacs and
+;; Magit plugin to make Gerrit code review easy-to-use from Emacs and
 ;; without the need for a browser!
 ;;
 ;; This package isn't being maintained anymore.

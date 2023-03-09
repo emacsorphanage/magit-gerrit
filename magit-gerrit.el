@@ -508,7 +508,7 @@ Succeed even if branch already exist
 (transient-append-suffix 'magit-dispatch "%"
   (list magit-gerrit-popup-prefix "Gerrit" 'magit-gerrit-popup))
 
-(transient-define-prefix magit-gerrit-copy-review-popup
+(transient-define-prefix magit-gerrit-copy-review-popup ()
   "Popup console for copy review to clipboard."
   ["Copy review"
    ("C" "url and commit message" magit-gerrit-copy-review-url-commit-message)

@@ -135,6 +135,12 @@ Typical values would be \"publish\" or \"for\".")
          "ssh" nil nil nil
          (split-string (apply #'magit-gerrit--command cmd args))))
 
+(defun magit-gerrit--ssh-cmd-insert (cmd &rest args)
+  "Insert the output of gerrit ssh CMD with ARGS into the current buffer."
+  (apply #'call-process
+         "ssh" nil t nil
+         (split-string (apply #'magit-gerrit--command cmd args))))
+
 (defun magit-gerrit--review-abandon (prj rev)
   (magit-gerrit--ssh-cmd "review" "--project" prj "--abandon" rev))
 

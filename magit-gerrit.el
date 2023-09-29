@@ -141,6 +141,27 @@ Typical values would be \"publish\" or \"for\".")
          "ssh" nil t nil
          (split-string (apply #'magit-gerrit--command cmd args))))
 
+(defun magit-gerrit--ssh-query (project &rest query)
+  "Add `project:PROJECT' to QUERY and send it to gerrit.
+Return a list of alists read using `read-json'.
+QUERY can end with an item `limit:N' to limit the number of
+responses as described in the gerrit documentation.
+All query commands use the `--format=JSON', `--all-approvals',
+`--comments', and `--current-patch-set' options."
+  (with-temp-buffer
+    (apply #'magit-gerrit--ssh-cmd-insert "query"
+           "--format=JSON"
+           "--all-approvals" "--comments"
+           "--current-patch-set"
+           (concat "project:" project)
+           query)
+    (goto-char (point-min))
+    (cl-loop named gerrit-items
+             with item = nil
+             while (and (setq item (json-read))
+                        (not (eq (caar item) 'type)))
+             collect item)))
+
 (defun magit-gerrit--review-abandon (prj rev)
   (magit-gerrit--ssh-cmd "review" "--project" prj "--abandon" rev))
 

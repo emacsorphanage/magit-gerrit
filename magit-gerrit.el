@@ -295,6 +295,12 @@ Succeed even if branch already exist
 (defun magit-gerrit-remote-update (&optional _remote)
   nil)
 
+(defun magit-gerrit--commit-change-id (commit)
+  "Get the Change-Id footer value for COMMIT from its commit message.
+COMMIT should be a unique commit SHA string."
+  (magit-git-string
+   "log" "-1" "--format=%(trailers:key=Change-Id,valueonly=true)" commit))
+
 (defun magit-gerrit-review-at-point ()
   (get-text-property (point) 'magit-gerrit-jobj))
 

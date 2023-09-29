@@ -302,7 +302,15 @@ COMMIT should be a unique commit SHA string."
    "log" "-1" "--format=%(trailers:key=Change-Id,valueonly=true)" commit))
 
 (defun magit-gerrit-review-at-point ()
-  (get-text-property (point) 'magit-gerrit-jobj))
+  "Get the review data for the review or commit at point.
+If point is on a review, the data has already been fetched from gerrit.
+If it is on a commit, check the `Change-Id' footer of the commit
+message and fetch the review data from gerrit."
+  (or (get-text-property (point) 'magit-gerrit-jobj)
+      (when-let ((change-id
+                  (magit-gerrit--commit-change-id (magit-commit-at-point))))
+        (car (magit-gerrit--ssh-query (magit-gerrit-get-project)
+                                      change-id)))))
 
 (defsubst magit-gerrit-process-wait ()
   (while (and magit-this-process

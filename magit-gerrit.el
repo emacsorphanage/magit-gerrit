@@ -124,8 +124,6 @@ Typical values would be \"publish\" or \"for\".")
 (defun magit-gerrit--query (prj &optional status)
   (magit-gerrit--command "query"
                          "--format=JSON"
-                         "--all-approvals"
-                         "--comments"
                          "--current-patch-set"
                          (concat "project:" prj)
                          (concat "status:" (or status "open"))))

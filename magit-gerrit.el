@@ -327,8 +327,8 @@ If PROCESS is nil, wait for `magit-this-process'."
             (dir default-directory))
         (with-temp-message (format "Waiting a git fetch from %s to complete..."
                                    magit-gerrit-remote)
-          (magit-git-fetch magit-gerrit-remote ref)
-          (magit-gerrit-process-wait))
+          (magit-gerrit-process-wait
+           (magit-git-fetch magit-gerrit-remote ref)))
         (message "Generating Gerrit Patchset for refs %s dir %s" ref dir)
         (apply #'magit-diff-setup-buffer
                "FETCH_HEAD~1..FETCH_HEAD" nil
@@ -346,8 +346,8 @@ If PROCESS is nil, wait for `magit-this-process'."
                             (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
         (with-temp-message (format "Waiting a git fetch from %s to complete..."
                                    magit-gerrit-remote)
-          (magit-git-fetch magit-gerrit-remote ref)
-          (magit-gerrit-process-wait))
+          (magit-gerrit-process-wait
+           (magit-git-fetch magit-gerrit-remote ref)))
         (with-temp-message (format "Checking out refs %s to %s in %s" ref branch dir)
           (magit-gerrit-create-branch-force branch "FETCH_HEAD"))))))
 

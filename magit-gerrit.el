@@ -310,9 +310,12 @@ message and fetch the review data from gerrit."
         (car (magit-gerrit--ssh-query (magit-gerrit-get-project)
                                       change-id)))))
 
-(defsubst magit-gerrit-process-wait ()
-  (while (and magit-this-process
-              (eq (process-status magit-this-process) 'run))
+(defsubst magit-gerrit-process-wait (&optional process)
+  "Wait for PROCESS to finish.
+If PROCESS is nil, wait for `magit-this-process'."
+  (setq process (or process magit-this-process))
+  (while (and process
+              (eq (process-status process) 'run))
     (sleep-for 0.005)))
 
 (defun magit-gerrit-view-patchset-diff ()

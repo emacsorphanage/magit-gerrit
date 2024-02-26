@@ -322,11 +322,11 @@ message and fetch the review data from gerrit."
     (when jobj
       (let ((ref (cdr (assoc 'ref (assoc 'currentPatchSet jobj))))
             (dir default-directory))
-        (magit-git-fetch magit-gerrit-remote ref)
-        (message (format "Waiting a git fetch from %s to complete..."
-                         magit-gerrit-remote))
-        (magit-gerrit-process-wait)
-        (message (format "Generating Gerrit Patchset for refs %s dir %s" ref dir))
+        (with-temp-message (format "Waiting a git fetch from %s to complete..."
+                                   magit-gerrit-remote)
+          (magit-git-fetch magit-gerrit-remote ref)
+          (magit-gerrit-process-wait))
+        (message "Generating Gerrit Patchset for refs %s dir %s" ref dir)
         (apply #'magit-diff-setup-buffer
                "FETCH_HEAD~1..FETCH_HEAD" nil
                (magit-diff-arguments))))))
@@ -341,12 +341,12 @@ message and fetch the review data from gerrit."
             (branch (format "review/%s/%s"
                             (cdr (assoc 'username (assoc 'owner jobj)))
                             (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
-        (magit-git-fetch magit-gerrit-remote ref)
-        (message (format "Waiting a git fetch from %s to complete..."
-                         magit-gerrit-remote))
-        (magit-gerrit-process-wait)
-        (message (format "Checking out refs %s to %s in %s" ref branch dir))
-        (magit-gerrit-create-branch-force branch "FETCH_HEAD")))))
+        (with-temp-message (format "Waiting a git fetch from %s to complete..."
+                                   magit-gerrit-remote)
+          (magit-git-fetch magit-gerrit-remote ref)
+          (magit-gerrit-process-wait))
+        (with-temp-message (format "Checking out refs %s to %s in %s" ref branch dir)
+          (magit-gerrit-create-branch-force branch "FETCH_HEAD"))))))
 
 (defun magit-gerrit-browse-review ()
   "Browse the Gerrit Review with a browser."

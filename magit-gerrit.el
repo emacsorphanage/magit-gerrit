@@ -457,8 +457,8 @@ Include the commit message when WITH-COMMIT-MESSAGE is non-nil."
          (commitid (or (magit-section-value-if 'commit)
                        (error "Couldn't find a commit at point")))
          (rev (magit-rev-parse (or commitid
-                                   (error "Select a commit for review"))))
-         (remote (and branch (magit-get "branch" branch "remote"))))
+                                   (user-error "Select a commit for review"))))
+         (remote (magit-get "branch" branch "remote")))
     (let* ((branch-merge (if (or (null remote)
                                  (string= remote "."))
                              (completing-read

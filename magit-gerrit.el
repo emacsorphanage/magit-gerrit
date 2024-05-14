@@ -112,7 +112,7 @@ Typical values would be \"publish\" or \"for\".")
   (let ((gcmd (concat
                "-x -p 29418 "
                (or magit-gerrit-ssh-creds
-                   (error "`magit-gerrit-ssh-creds' must be set!"))
+                   (user-error "`magit-gerrit-ssh-creds' must be set!"))
                " "
                "gerrit "
                cmd
@@ -443,11 +443,11 @@ If PROCESS is nil, wait for `magit-this-process'."
 
 (defun magit-gerrit-push-review (status)
   (let* ((branch (or (magit-get-current-branch)
-                     (error "Don't push a detached head.  That's gross")))
+                     (user-error "Don't push a detached head.  That's gross")))
          (commitid (or (magit-section-value-if 'commit)
-                       (error "Couldn't find a commit at point")))
+                       (user-error "Couldn't find a commit at point")))
          (rev (magit-rev-parse (or commitid
-                                   (error "Select a commit for review"))))
+                                   (user-error "Select a commit for review"))))
          (branch-remote (and branch (magit-get "branch" branch "remote"))))
     (let* ((branch-merge (if (or (null branch-remote)
                                  (string= branch-remote "."))
@@ -566,11 +566,11 @@ If PROCESS is nil, wait for `magit-this-process'."
   "Gerrit support for Magit."
   :lighter " Gerrit" :require 'magit-topgit :keymap 'magit-gerrit-mode-map
   (unless (derived-mode-p 'magit-mode)
-    (error "This mode only makes sense with magit"))
+    (user-error "This mode only makes sense with magit"))
   (unless magit-gerrit-ssh-creds
-    (error "You *must* set `magit-gerrit-ssh-creds' to enable magit-gerrit-mode"))
+    (user-error "You *must* set `magit-gerrit-ssh-creds' to enable magit-gerrit-mode"))
   (unless (magit-gerrit-get-remote-url)
-    (error "You *must* set `magit-gerrit-remote' to a valid Gerrit remote"))
+    (user-error "You *must* set `magit-gerrit-remote' to a valid Gerrit remote"))
   (cond
    (magit-gerrit-mode
     (magit-add-section-hook 'magit-status-sections-hook

@@ -448,9 +448,9 @@ If PROCESS is nil, wait for `magit-this-process'."
                        (user-error "Couldn't find a commit at point")))
          (rev (magit-rev-parse (or commitid
                                    (user-error "Select a commit for review"))))
-         (branch-remote (and branch (magit-get "branch" branch "remote"))))
-    (let* ((branch-merge (if (or (null branch-remote)
-                                 (string= branch-remote "."))
+         (remote (and branch (magit-get "branch" branch "remote"))))
+    (let* ((branch-merge (if (or (null remote)
+                                 (string= remote "."))
                              (completing-read
                               "Remote Branch: "
                               (let ((rbs (magit-list-remote-branch-names)))
@@ -475,10 +475,10 @@ If PROCESS is nil, wait for `magit-this-process'."
                                  status
                                  (match-string 1 branch-merge)
                                  branch))))
-      (when (or (null branch-remote)
-                (string= branch-remote "."))
-        (setq branch-remote magit-gerrit-remote))
-      (magit-run-git-async "push" "-v" branch-remote
+      (when (or (null remote)
+                (string= remote "."))
+        (setq remote magit-gerrit-remote))
+      (magit-run-git-async "push" "-v" remote
                            (concat rev ":" branch-pub)))))
 
 (defun magit-gerrit-create-review ()

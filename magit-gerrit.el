@@ -334,6 +334,10 @@ If PROCESS is nil, wait for `magit-this-process'."
                "FETCH_HEAD~1..FETCH_HEAD" nil
                (magit-diff-arguments))))))
 
+(defun magit-gerrit-review-number-at-point ()
+  "Return the Gerrit review number of the review at point."
+  (cdr (assoc 'number (magit-gerrit-review-at-point))))
+
 (defun magit-gerrit-download-patchset ()
   "Download a Gerrit Review Patchset."
   (interactive)

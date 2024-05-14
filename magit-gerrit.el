@@ -529,24 +529,28 @@ If PROCESS is nil, wait for `magit-this-process'."
 
 (transient-define-prefix magit-gerrit-popup ()
   "Popup console for magit gerrit commands."
-  ["Options"
-   ("-m" "Comment" "--message "
-    :class transient-option
-    :reader magit-gerrit-read-comment)]
-  ["Actions"
-   ("P" "Push Commit For Review"       magit-gerrit-create-review)
-   ("W" "Push Commit For Draft Review" magit-gerrit-create-draft)
-   ("p" "Publish Draft Patchset"       magit-gerrit-publish-draft)
-   ("k" "Delete Draft"                 magit-gerrit-delete-draft)
-   ("A" "Add Reviewer"                 magit-gerrit-add-reviewer)
-   ("V" "Verify"                       magit-gerrit-verify-review)
-   ("c" "Copy Review"                  magit-gerrit-copy-review-popup)
-   ("C" "Code Review"                  magit-gerrit-code-review)
-   ("d" "View Patchset Diff"           magit-gerrit-view-patchset-diff)
-   ("D" "Download Patchset"            magit-gerrit-download-patchset)
-   ("S" "Submit Review"                magit-gerrit-submit-review)
-   ("B" "Abandon Review"               magit-gerrit-abandon-review)
-   ("b" "Browse Review"                magit-gerrit-browse-review)])
+   ["Options"
+    [("-m" "Comment" "--message "
+     :class transient-option
+     :reader magit-gerrit-read-comment)]]
+   [["Push"
+     ("P" "Push Commit For Review"       magit-gerrit-create-review)
+     ("W" "Push Commit For Draft Review" magit-gerrit-create-draft)
+     ("p" "Publish Draft Patchset"       magit-gerrit-publish-draft)]
+    ["Vote"
+     ("V" "Verify"                       magit-gerrit-verify-review)
+     ("c" "Copy Review"                  magit-gerrit-copy-review-popup)
+     ("C" "Code Review"                  magit-gerrit-code-review)
+     ]
+    ["Actions"
+     ("k" "Delete Draft"                 magit-gerrit-delete-draft)
+     ("A" "Add Reviewer"                 magit-gerrit-add-reviewer)
+     ("S" "Submit Review"                magit-gerrit-submit-review)
+     ("B" "Abandon Review"               magit-gerrit-abandon-review)]
+    ["View"
+     ("d" "View Patchset Diff"           magit-gerrit-view-patchset-diff)
+     ("D" "Download Patchset"            magit-gerrit-download-patchset)
+     ("b" "Browse Review"                magit-gerrit-browse-review)]])
 
 (defun magit-gerrit-arguments ()
   (or (transient-args 'magit-gerrit-popup)

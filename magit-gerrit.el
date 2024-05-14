@@ -448,7 +448,7 @@ If PROCESS is nil, wait for `magit-this-process'."
                        (user-error "Couldn't find a commit at point")))
          (rev (magit-rev-parse (or commitid
                                    (user-error "Select a commit for review"))))
-         (remote (and branch (magit-get "branch" branch "remote"))))
+         (remote (magit-get "branch" branch "remote")))
     (let* ((branch-merge (if (or (null remote)
                                  (string= remote "."))
                              (completing-read

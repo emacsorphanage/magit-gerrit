@@ -341,6 +341,7 @@ message and fetch the review data from gerrit."
             (branch (format "review/%s/%s"
                             (cdr (assoc 'username (assoc 'owner jobj)))
                             (cdr (or (assoc 'topic jobj) (assoc 'number jobj))))))
+        (magit-git-fetch magit-gerrit-remote ref)
         (message (format "Waiting a git fetch from %s to complete..."
                          magit-gerrit-remote))
         (magit-gerrit-process-wait)

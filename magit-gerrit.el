@@ -452,6 +452,14 @@ Include the commit message when WITH-COMMIT-MESSAGE is non-nil."
                    (magit-fetch-arguments)))
 
 (defun magit-gerrit-push-review (status)
+  "Push a review.
+Pushes to the magic gerrit refspec created by formatting
+`magit-gerrit-push-format' with arguments STATUS, the target branch (the
+remote branch), and the current branch.  For instance, pushing from a
+branch named `foo' which is tracking `origin/main' would use the refspec
+`refs/publish/master/foo' by default.
+Suitable values for `magit-gerrit-push-format' and STATUS depend on your
+Gerrit installation."
   (let* ((branch (or (magit-get-current-branch)
                      (error "Don't push a detached head.  That's gross")))
          (commitid (or (magit-section-value-if 'commit)
@@ -492,14 +500,18 @@ Include the commit message when WITH-COMMIT-MESSAGE is non-nil."
                            (concat rev ":" branch-pub)))))
 
 (defun magit-gerrit-create-review ()
+  "Create reviews for the commit at point and it's ancestors.
+If the commits already have reviews, they will be updated."
   (interactive)
   (magit-gerrit-push-review magit-gerrit-push-to))
 
 (defun magit-gerrit-create-draft ()
+  "Create draft reviews for the commit at point and it's ancestors."
   (interactive)
   (magit-gerrit-push-review 'drafts))
 
 (defun magit-gerrit-publish-draft ()
+  "Push new reviews and publish any draft reviews."
   (interactive)
   (let ((prj (magit-gerrit-get-project))
         (rev (cdr-safe (assoc

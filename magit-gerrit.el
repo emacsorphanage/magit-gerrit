@@ -477,14 +477,14 @@ Include the commit message when WITH-COMMIT-MESSAGE is non-nil."
                                                   (match-string 1 rb))))
                                  rbs)))
                            (and branch (magit-get "branch" branch "merge"))))
-           (branch-pub (progn
-                         (string-match
-                          (rx "refs/heads" (group (one-or-more any)))
-                          branch-merge)
-                         (format magit-gerrit-push-format
-                                 status
-                                 (match-string 1 branch-merge)
-                                 branch))))
+           (branch-pub (format magit-gerrit-push-format
+                               status
+                               (replace-regexp-in-string
+                                (rx "refs/heads" (group-n 1 (one-or-more any)))
+                                "\\1"
+                                branch-merge)
+                               (match-string 1 branch-merge)
+                               branch)))
       (when (or (null remote)
                 (string= remote "."))
         (setq remote magit-gerrit-remote))
